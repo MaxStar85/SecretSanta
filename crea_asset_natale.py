@@ -573,9 +573,11 @@ def pezzo_sfera(tela, W, H, cx, cy, r, colore, lucido=1.0):
     tela.sopra(lr, la)
 
 
-def crea_pupazzo(nome, stile):
+def crea_pupazzo(stile):
+    """restituisce i livelli separati (per animarli): corpo, occhi, braccio sx, braccio dx, coda sciarpa"""
     W, H = 700, 900
-    tela = Tela(W, H)
+    L = {k: Tela(W, H) for k in ("corpo", "occhi", "bsx", "bdx", "coda")}
+    tela = L["corpo"]
     yy, xx = np.mgrid[0:H, 0:W].astype(float)
 
     # cumulo di neve e ombra a terra
@@ -594,45 +596,48 @@ def crea_pupazzo(nome, stile):
         ao = ndi.gaussian_filter(((np.abs(np.hypot(xx - cx, yy - cy) - r) < 3) & (yy < cy - r * 0.2)).astype(float), 4) * 0.30
         tela.sopra(np.ones((H, W, 3)) * np.array([120.0, 140.0, 190.0]), ao * tela.a)
 
-    # braccia (rametti)
+    # braccia (rametti), ciascuna sul proprio livello
     def ramo(d, s, pts, spess):
         d.line([(x * s, y * s) for x, y in pts], fill=255, width=int(spess * s), joint="curve")
 
-    def braccia(d, s):
-        ramo(d, s, [(268, 500), (190, 470), (112, 408)], 13)
+    def braccio_sx(d, s):
+        ramo(d, s, [(300, 505), (190, 470), (112, 408)], 13)
         ramo(d, s, [(150, 440), (128, 470)], 8)
         ramo(d, s, [(135, 424), (92, 408)], 7)
-        ramo(d, s, [(432, 500), (520, 478), (600, 420)], 13)
+
+    def braccio_dx(d, s):
+        ramo(d, s, [(400, 505), (520, 478), (600, 420)], 13)
         ramo(d, s, [(560, 448), (590, 478)], 8)
         ramo(d, s, [(572, 436), (620, 440)], 7)
 
-    bracc = maschera_pil(W, H, braccia)
     leg = np.ones((H, W, 3)) * np.array([104.0, 70.0, 42.0])
     leg *= (1 + 0.25 * fractal((H, W), [1.5, .8], [1, 1], 9))[..., None]
-    tela.sopra(*ombreggia(bracc, leg, sigma=3, k=14, spec=0.15))
+    L["bsx"].sopra(*ombreggia(maschera_pil(W, H, braccio_sx), leg, sigma=3, k=14, spec=0.15))
+    L["bdx"].sopra(*ombreggia(maschera_pil(W, H, braccio_dx), leg, sigma=3, k=14, spec=0.15))
 
     # bottoni di carbone
     for by in (480, 530, 580):
         pezzo_sfera(tela, W, H, 350, by, 11, (28, 26, 30), 0.9)
 
-    # sciarpa
+    # sciarpa: collo sul corpo, coda sul proprio livello
     if stile == "cilindro":
         c1, c2 = np.array([186.0, 24.0, 40.0]), np.array([246.0, 240.0, 228.0])
     else:
         c1, c2 = np.array([26.0, 112.0, 80.0]), np.array([246.0, 240.0, 228.0])
 
-    def sciarpa(d, s):
+    def collo(d, s):
         d.pieslice([232 * s, 408 * s, 468 * s, 500 * s], 0, 180, fill=255)
         d.rectangle([248 * s, 452 * s, 452 * s, 458 * s], fill=255)
 
-    sc = maschera_pil(W, H, sciarpa)
-    coda = maschera_pil(W, H, lambda d, s: d.polygon([(398 * s, 470 * s), (448 * s, 462 * s), (470 * s, 590 * s), (418 * s, 600 * s)], fill=255))
-    sc = np.clip(sc + coda, 0, 1)
+    sc = maschera_pil(W, H, collo)
     strisce = (np.sin((xx * 0.5 + yy * 0.05) / 4.2) > 0.1).astype(float)
-    strisce_c = (np.sin((yy * 0.5) / 4.2) > 0.1).astype(float)
-    mix = np.where((coda > 0.5)[..., None], (c1 * strisce_c[..., None] + c2 * (1 - strisce_c[..., None])), (c1 * strisce[..., None] + c2 * (1 - strisce[..., None])))
+    mixc = c1 * strisce[..., None] + c2 * (1 - strisce[..., None])
     maglia = 0.012 * np.sin(xx * 1.4) * np.sin(yy * 1.4)
-    tela.sopra(*ombreggia(sc, mix, sigma=5, k=22, spec=0.1, rugosita=maglia))
+    tela.sopra(*ombreggia(sc, mixc, sigma=5, k=22, spec=0.1, rugosita=maglia))
+    coda = maschera_pil(W, H, lambda d, s: d.polygon([(398 * s, 466 * s), (448 * s, 458 * s), (470 * s, 590 * s), (418 * s, 600 * s)], fill=255))
+    strisce_c = (np.sin((yy * 0.5) / 4.2) > 0.1).astype(float)
+    mixt = c1 * strisce_c[..., None] + c2 * (1 - strisce_c[..., None])
+    L["coda"].sopra(*ombreggia(coda, mixt, sigma=5, k=22, spec=0.1, rugosita=maglia))
 
     # naso a carota
     nas = maschera_pil(W, H, lambda d, s: d.polygon([(338 * s, 366 * s), (338 * s, 386 * s), (452 * s, 394 * s)], fill=255))
@@ -640,9 +645,9 @@ def crea_pupazzo(nome, stile):
     carota *= (1 - 0.14 * (np.sin(xx / 5.0) > 0.4))[..., None]
     tela.sopra(*ombreggia(nas, carota, sigma=3.2, k=30, spec=0.25))
 
-    # occhi, sorriso, guance
+    # occhi (livello a parte, per sbattere le palpebre), sorriso, guance
     for ex, ey in ((314, 346), (386, 346)):
-        pezzo_sfera(tela, W, H, ex, ey, 10, (22, 20, 24), 1.0)
+        pezzo_sfera(L["occhi"], W, H, ex, ey, 10, (22, 20, 24), 1.0)
     for i in range(7):
         t = i / 6
         pezzo_sfera(tela, W, H, 350 + (t - 0.5) * 100, 404 + 22 * math.sin(math.pi * t) - 2, 5.5, (30, 28, 32), 0.8)
@@ -676,22 +681,30 @@ def crea_pupazzo(nome, stile):
         righe = (np.sin((xx - 350) / 5.5) > -0.15).astype(float)
         cl = np.array([176.0, 24.0, 40.0])
         bi = np.array([246.0, 240.0, 228.0])
-        colm = cl[None, None, :] * righe[..., None] + bi[None, None, :] * (1 - righe[..., None])
-        colm = np.where((yy > 328)[..., None], bi[None, None, :], colm)
+        colm2 = cl[None, None, :] * righe[..., None] + bi[None, None, :] * (1 - righe[..., None])
+        colm2 = np.where((yy > 328)[..., None], bi[None, None, :], colm2)
         maglia2 = 0.012 * np.sin(xx * 1.3) * np.sin(yy * 1.3)
-        tela.sopra(*ombreggia(cupola, colm, sigma=7, k=22, spec=0.1, rugosita=maglia2))
+        tela.sopra(*ombreggia(cupola, colm2, sigma=7, k=22, spec=0.1, rugosita=maglia2))
         pr, pa = sfera_neve(W, H, 350, 262, 26, 21)
         tela.sopra(pr, pa)
 
-    return tela.immagine().resize((W // 2, H // 2), Image.LANCZOS)
+    return {k: v.immagine().resize((W // 2, H // 2), Image.LANCZOS) for k, v in L.items()}
 
 
 def crea_pupazzi():
-    for nome, stile in (("pupazzo-sx.webp", "cilindro"), ("pupazzo-dx.webp", "cuffia")):
-        im = crea_pupazzo(nome, stile)
-        im = im.crop(im.getbbox())
-        im.save(os.path.join(USCITA, nome), quality=92, method=6)
-        print(nome, im.size, os.path.getsize(os.path.join(USCITA, nome)) // 1024, "KB")
+    for lato, stile in (("sx", "cilindro"), ("dx", "cuffia")):
+        livelli = crea_pupazzo(stile)
+        # riquadro comune a tutti i livelli (cosi' si sovrappongono perfettamente)
+        a = np.zeros((450, 350))
+        for im in livelli.values():
+            a = np.maximum(a, np.array(im)[..., 3])
+        ys, xs = np.nonzero(a > 6)
+        box = (int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1)
+        cw, ch = box[2] - box[0], box[3] - box[1]
+        for nome, im in livelli.items():
+            im.crop(box).save(os.path.join(USCITA, "pupazzo-%s-%s.webp" % (lato, nome)), quality=92, method=6)
+        pc = lambda x, y: "%.1f%% %.1f%%" % ((x / 2 - box[0]) / cw * 100, (y / 2 - box[1]) / ch * 100)
+        print(lato, "dimensioni", cw, ch, "| spalla sx", pc(300, 505), "| spalla dx", pc(400, 505), "| coda", pc(423, 466), "| occhi", pc(350, 346))
 
 
 if __name__ == "__main__":

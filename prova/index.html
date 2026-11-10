@@ -45,9 +45,21 @@ body{
 @keyframes dondola{0%,100%{transform:rotate(3.5deg)}50%{transform:rotate(-3.5deg)}}
 
 /* Rami di pino negli angoli */
-.pup{position:fixed;bottom:-2px;z-index:1;pointer-events:none;width:clamp(80px,23vw,210px);height:auto}
-.pup.sx{left:clamp(0px,1vw,20px)}
-.pup.dx{right:clamp(0px,1vw,20px)}
+.pup{position:fixed;bottom:-2px;z-index:1;pointer-events:none;width:clamp(58px,min(17vw,12.5dvh),170px);transform-origin:50% 100%;animation:pupDondola 4.2s ease-in-out infinite}
+.pup.sx{left:clamp(0px,1vw,20px);aspect-ratio:312/362;--sy:45.4%;--cy:40.1%;--ey:23.5%}
+.pup.dx{right:clamp(0px,1vw,20px);aspect-ratio:312/332;--sy:40.5%;--cy:34.6%;--ey:16.6%;animation-delay:-1.7s}
+.pup .l{position:absolute;inset:0;width:100%;height:100%;display:block}
+.pup .bsx{transform-origin:42% var(--sy);animation:saluta 2.6s ease-in-out infinite}
+.pup .bdx{transform-origin:58% var(--sy);animation:salutaD 2.6s ease-in-out 1.3s infinite}
+.pup.dx .bsx{animation-delay:.9s}
+.pup .coda{transform-origin:61.7% var(--cy);animation:codaVento 3.2s ease-in-out infinite}
+.pup .occhi{transform-origin:50% var(--ey);animation:sbatte 5.5s infinite}
+.pup.dx .occhi{animation-delay:-2.2s}
+@keyframes pupDondola{0%,100%{transform:rotate(-1.3deg)}50%{transform:rotate(1.3deg) scaleY(1.012)}}
+@keyframes saluta{0%,100%{transform:rotate(0)}50%{transform:rotate(17deg)}}
+@keyframes salutaD{0%,100%{transform:rotate(0)}50%{transform:rotate(-17deg)}}
+@keyframes codaVento{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(8deg)}}
+@keyframes sbatte{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.08)}}
 
 main{position:relative;z-index:3;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:clamp(84px,13dvh,110px) 18px 28px;gap:clamp(12px,2.6dvh,26px);text-align:center}
 
@@ -240,7 +252,6 @@ main:has(#rivela.visibile) .titolo{display:none}
 /* ===== MOBILE ===== */
 @media (max-width:440px){
   main{gap:clamp(10px,2dvh,20px)}
-  .pup{width:23vw;bottom:-2px}
   .demo{font-size:.68rem}
 }
 </style>
@@ -265,8 +276,8 @@ main:has(#rivela.visibile) .titolo{display:none}
 <div id="ghirlanda" aria-hidden="true"></div>
 
 <!-- Pupazzi di neve (immagini calcolate, vedi crea_asset_natale.py) -->
-<img class="pup sx" src="../assets/pupazzo-sx.webp" alt="" aria-hidden="true">
-<img class="pup dx" src="../assets/pupazzo-dx.webp" alt="" aria-hidden="true">
+<div class="pup sx" aria-hidden="true"><img class="l bsx" src="../assets/pupazzo-sx-bsx.webp" alt=""><img class="l bdx" src="../assets/pupazzo-sx-bdx.webp" alt=""><img class="l corpo" src="../assets/pupazzo-sx-corpo.webp" alt=""><img class="l occhi" src="../assets/pupazzo-sx-occhi.webp" alt=""><img class="l coda" src="../assets/pupazzo-sx-coda.webp" alt=""></div>
+<div class="pup dx" aria-hidden="true"><img class="l bsx" src="../assets/pupazzo-dx-bsx.webp" alt=""><img class="l bdx" src="../assets/pupazzo-dx-bdx.webp" alt=""><img class="l corpo" src="../assets/pupazzo-dx-corpo.webp" alt=""><img class="l occhi" src="../assets/pupazzo-dx-occhi.webp" alt=""><img class="l coda" src="../assets/pupazzo-dx-coda.webp" alt=""></div>
 
 <main>
   <div class="tuo"><div class="anello"><div class="fm" id="fotoTuo"></div></div></div>
