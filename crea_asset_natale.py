@@ -22,6 +22,16 @@ LUCE = LUCE / np.linalg.norm(LUCE)
 VERDI = [(7, 34, 26), (14, 66, 46), (24, 100, 66), (52, 140, 92), (112, 190, 128)]
 
 
+def fractal(shape, sigmas, pesi, seed):
+    r = np.random.default_rng(seed)
+    out = np.zeros(shape)
+    for sg, w in zip(sigmas, pesi):
+        n = ndi.gaussian_filter(r.standard_normal(shape), sg, mode="wrap")
+        n /= n.std() + 1e-9
+        out += w * n
+    return out / sum(pesi)
+
+
 def lerp(a, b, t):
     return tuple(a[i] + (b[i] - a[i]) * t for i in range(len(a)))
 
@@ -486,12 +496,212 @@ def crea_ramo():
     print("ramo", out.size, os.path.getsize(os.path.join(USCITA, "ramo.webp")) // 1024, "KB")
 
 
+# =====================================================================
+#   PUPAZZI DI NEVE
+# =====================================================================
+class Tela:
+    """accumulatore RGBA (alfa premoltiplicata) per comporre i pezzi"""
+    def __init__(self, W, H):
+        self.W, self.H = W, H
+        self.rgb = np.zeros((H, W, 3))
+        self.a = np.zeros((H, W))
+
+    def sopra(self, rgb, a):
+        self.rgb = rgb * a[..., None] + self.rgb * (1 - a[..., None])
+        self.a = a + self.a * (1 - a)
+
+    def immagine(self):
+        al = np.maximum(self.a, 1e-4)[..., None]
+        out = np.dstack([np.clip(self.rgb / al, 0, 255), self.a * 255]).astype(np.uint8)
+        return Image.fromarray(out, "RGBA")
+
+
+def maschera_pil(W, H, disegna, ss=3):
+    im = Image.new("L", (W * ss, H * ss), 0)
+    disegna(ImageDraw.Draw(im), ss)
+    return np.asarray(im.resize((W, H), Image.LANCZOS), dtype=float) / 255
+
+
+def ombreggia(mask, colmap, sigma=7, k=26, spec=0.45, forma=60, rugosita=None):
+    h = ndi.gaussian_filter(mask, sigma)
+    if rugosita is not None:
+        h = h + rugosita
+    gy, gx = np.gradient(ndi.gaussian_filter(h, 1.0))
+    nx, ny, nz = -gx * k, -gy * k, np.ones_like(h)
+    nl = np.sqrt(nx ** 2 + ny ** 2 + nz ** 2)
+    nx, ny, nz = nx / nl, ny / nl, nz / nl
+    L = norm3([-0.5, -0.6, 0.62])
+    diff = np.clip(nx * L[0] + ny * L[1] + nz * L[2], 0, 1)
+    Hh = norm3(L + np.array([0, 0, 1.0]))
+    sp = np.clip(nx * Hh[0] + ny * Hh[1] + nz * Hh[2], 0, 1) ** forma * spec
+    rgb = colmap * (0.30 + 0.85 * diff)[..., None] + 255 * sp[..., None]
+    return np.clip(rgb, 0, 255), mask
+
+
+def sfera_neve(W, H, cx, cy, r, seed):
+    yy, xx = np.mgrid[0:H, 0:W].astype(float)
+    nx, ny = (xx - cx) / r, (yy - cy) / r
+    rr = np.sqrt(nx ** 2 + ny ** 2)
+    al = np.clip((1 - rr) * r + 0.5, 0, 1)
+    nz = np.sqrt(np.clip(1 - rr ** 2, 0, 1))
+    bump = fractal((H, W), [5, 2.2, 1.0], [1, .7, .5], seed) * 0.05
+    gy, gx = np.gradient(bump)
+    nxx, nyy, nzz = nx - gx * 6, ny - gy * 6, nz
+    nn = np.sqrt(nxx ** 2 + nyy ** 2 + nzz ** 2) + 1e-6
+    nxx, nyy, nzz = nxx / nn, nyy / nn, nzz / nn
+    L = norm3([-0.5, -0.6, 0.62])
+    diff = np.clip(nxx * L[0] + nyy * L[1] + nzz * L[2], 0, 1)
+    luce = np.array([252.0, 252.0, 255.0])
+    ombra = np.array([150.0, 172.0, 220.0])
+    t = diff ** 0.8
+    rgb = ombra[None, None, :] * (1 - t[..., None]) + luce[None, None, :] * t[..., None]
+    rim = (1 - nz) ** 2.2
+    rgb += np.array([-10.0, 6.0, 22.0]) * rim[..., None] * 0.6
+    sp = np.random.default_rng(seed + 5).random((H, W)) > 0.9965
+    rgb += 70 * (ndi.gaussian_filter(sp.astype(float), .7) * 3)[..., None]
+    return np.clip(rgb, 0, 255), al
+
+
+def pezzo_sfera(tela, W, H, cx, cy, r, colore, lucido=1.0):
+    s_ = sfera(r, colore, lucido=lucido)
+    a = np.array(s_, dtype=float)
+    ox, oy = int(cx - s_.size[0] // 2), int(cy - s_.size[1] // 2)
+    lr = np.zeros((H, W, 3))
+    la = np.zeros((H, W))
+    lr[oy:oy + s_.size[1], ox:ox + s_.size[0]] = a[..., :3]
+    la[oy:oy + s_.size[1], ox:ox + s_.size[0]] = a[..., 3] / 255
+    tela.sopra(lr, la)
+
+
+def crea_pupazzo(nome, stile):
+    W, H = 700, 900
+    tela = Tela(W, H)
+    yy, xx = np.mgrid[0:H, 0:W].astype(float)
+
+    # cumulo di neve e ombra a terra
+    mound = maschera_pil(W, H, lambda d, s: d.ellipse([60 * s, 800 * s, 640 * s, 905 * s], fill=255))
+    mound = ndi.gaussian_filter(mound, 14)
+    sfum = np.clip((yy - 800) / 110.0, 0, 1)
+    colm = np.array([248.0, 251.0, 255.0])[None, None, :] * (1 - 0.18 * sfum)[..., None] + np.array([190.0, 208.0, 240.0])[None, None, :] * (0.18 * sfum)[..., None]
+    tela.sopra(colm, mound * 0.97)
+    ombra = ndi.gaussian_filter(maschera_pil(W, H, lambda d, s: d.ellipse([170 * s, 820 * s, 560 * s, 880 * s], fill=255)), 14) * 0.45
+    tela.sopra(np.ones((H, W, 3)) * np.array([90.0, 110.0, 160.0]), ombra)
+
+    # tre sfere di neve
+    for cx, cy, r, sd in ((350, 712, 152, 1), (350, 525, 114, 2), (350, 372, 84, 3)):
+        rgb, al = sfera_neve(W, H, cx, cy, r, sd)
+        tela.sopra(rgb, al)
+        ao = ndi.gaussian_filter(((np.abs(np.hypot(xx - cx, yy - cy) - r) < 3) & (yy < cy - r * 0.2)).astype(float), 4) * 0.30
+        tela.sopra(np.ones((H, W, 3)) * np.array([120.0, 140.0, 190.0]), ao * tela.a)
+
+    # braccia (rametti)
+    def ramo(d, s, pts, spess):
+        d.line([(x * s, y * s) for x, y in pts], fill=255, width=int(spess * s), joint="curve")
+
+    def braccia(d, s):
+        ramo(d, s, [(268, 500), (190, 470), (112, 408)], 13)
+        ramo(d, s, [(150, 440), (128, 470)], 8)
+        ramo(d, s, [(135, 424), (92, 408)], 7)
+        ramo(d, s, [(432, 500), (520, 478), (600, 420)], 13)
+        ramo(d, s, [(560, 448), (590, 478)], 8)
+        ramo(d, s, [(572, 436), (620, 440)], 7)
+
+    bracc = maschera_pil(W, H, braccia)
+    leg = np.ones((H, W, 3)) * np.array([104.0, 70.0, 42.0])
+    leg *= (1 + 0.25 * fractal((H, W), [1.5, .8], [1, 1], 9))[..., None]
+    tela.sopra(*ombreggia(bracc, leg, sigma=3, k=14, spec=0.15))
+
+    # bottoni di carbone
+    for by in (480, 530, 580):
+        pezzo_sfera(tela, W, H, 350, by, 11, (28, 26, 30), 0.9)
+
+    # sciarpa
+    if stile == "cilindro":
+        c1, c2 = np.array([186.0, 24.0, 40.0]), np.array([246.0, 240.0, 228.0])
+    else:
+        c1, c2 = np.array([26.0, 112.0, 80.0]), np.array([246.0, 240.0, 228.0])
+
+    def sciarpa(d, s):
+        d.pieslice([232 * s, 408 * s, 468 * s, 500 * s], 0, 180, fill=255)
+        d.rectangle([248 * s, 452 * s, 452 * s, 458 * s], fill=255)
+
+    sc = maschera_pil(W, H, sciarpa)
+    coda = maschera_pil(W, H, lambda d, s: d.polygon([(398 * s, 470 * s), (448 * s, 462 * s), (470 * s, 590 * s), (418 * s, 600 * s)], fill=255))
+    sc = np.clip(sc + coda, 0, 1)
+    strisce = (np.sin((xx * 0.5 + yy * 0.05) / 4.2) > 0.1).astype(float)
+    strisce_c = (np.sin((yy * 0.5) / 4.2) > 0.1).astype(float)
+    mix = np.where((coda > 0.5)[..., None], (c1 * strisce_c[..., None] + c2 * (1 - strisce_c[..., None])), (c1 * strisce[..., None] + c2 * (1 - strisce[..., None])))
+    maglia = 0.012 * np.sin(xx * 1.4) * np.sin(yy * 1.4)
+    tela.sopra(*ombreggia(sc, mix, sigma=5, k=22, spec=0.1, rugosita=maglia))
+
+    # naso a carota
+    nas = maschera_pil(W, H, lambda d, s: d.polygon([(338 * s, 366 * s), (338 * s, 386 * s), (452 * s, 394 * s)], fill=255))
+    carota = np.ones((H, W, 3)) * np.array([250.0, 120.0, 24.0])
+    carota *= (1 - 0.14 * (np.sin(xx / 5.0) > 0.4))[..., None]
+    tela.sopra(*ombreggia(nas, carota, sigma=3.2, k=30, spec=0.25))
+
+    # occhi, sorriso, guance
+    for ex, ey in ((314, 346), (386, 346)):
+        pezzo_sfera(tela, W, H, ex, ey, 10, (22, 20, 24), 1.0)
+    for i in range(7):
+        t = i / 6
+        pezzo_sfera(tela, W, H, 350 + (t - 0.5) * 100, 404 + 22 * math.sin(math.pi * t) - 2, 5.5, (30, 28, 32), 0.8)
+    for gx_ in (292, 408):
+        g = ndi.gaussian_filter(maschera_pil(W, H, lambda d, s: d.ellipse([(gx_ - 18) * s, 372 * s, (gx_ + 18) * s, 394 * s], fill=255)), 7) * 0.45
+        tela.sopra(np.ones((H, W, 3)) * np.array([255.0, 120.0, 130.0]), g)
+
+    # cappello
+    if stile == "cilindro":
+        falda = maschera_pil(W, H, lambda d, s: d.ellipse([250 * s, 292 * s, 450 * s, 332 * s], fill=255))
+
+        def corona_(d, s):
+            d.rectangle([278 * s, 190 * s, 422 * s, 312 * s], fill=255)
+            d.ellipse([278 * s, 178 * s, 422 * s, 204 * s], fill=255)
+            d.ellipse([278 * s, 298 * s, 422 * s, 326 * s], fill=255)
+
+        corona = maschera_pil(W, H, corona_)
+        nero = np.ones((H, W, 3)) * np.array([30.0, 28.0, 34.0])
+        tela.sopra(*ombreggia(falda, nero, sigma=4, k=18, spec=0.5, forma=40))
+        tela.sopra(*ombreggia(corona, nero, sigma=9, k=16, spec=0.55, forma=40))
+        fascia = maschera_pil(W, H, lambda d, s: d.rectangle([278 * s, 270 * s, 422 * s, 298 * s], fill=255)) * (corona > 0.5)
+        tela.sopra(*ombreggia(fascia, np.ones((H, W, 3)) * np.array([176.0, 24.0, 40.0]), sigma=3, k=14, spec=0.3))
+        for bx in (396, 408):
+            pezzo_sfera(tela, W, H, bx, 282, 7, (200, 18, 34), 1.0)
+    else:
+        def cupola_(d, s):
+            d.pieslice([262 * s, 270 * s, 438 * s, 400 * s], 180, 360, fill=255)
+            d.rectangle([262 * s, 330 * s, 438 * s, 352 * s], fill=255)
+
+        cupola = np.clip(maschera_pil(W, H, cupola_), 0, 1) * (yy < 356)
+        righe = (np.sin((xx - 350) / 5.5) > -0.15).astype(float)
+        cl = np.array([176.0, 24.0, 40.0])
+        bi = np.array([246.0, 240.0, 228.0])
+        colm = cl[None, None, :] * righe[..., None] + bi[None, None, :] * (1 - righe[..., None])
+        colm = np.where((yy > 328)[..., None], bi[None, None, :], colm)
+        maglia2 = 0.012 * np.sin(xx * 1.3) * np.sin(yy * 1.3)
+        tela.sopra(*ombreggia(cupola, colm, sigma=7, k=22, spec=0.1, rugosita=maglia2))
+        pr, pa = sfera_neve(W, H, 350, 262, 26, 21)
+        tela.sopra(pr, pa)
+
+    return tela.immagine().resize((W // 2, H // 2), Image.LANCZOS)
+
+
+def crea_pupazzi():
+    for nome, stile in (("pupazzo-sx.webp", "cilindro"), ("pupazzo-dx.webp", "cuffia")):
+        im = crea_pupazzo(nome, stile)
+        im = im.crop(im.getbbox())
+        im.save(os.path.join(USCITA, nome), quality=92, method=6)
+        print(nome, im.size, os.path.getsize(os.path.join(USCITA, nome)) // 1024, "KB")
+
+
 if __name__ == "__main__":
     import sys
-    cosa = sys.argv[1:] or ["palline", "ghirlanda", "ramo"]
+    cosa = sys.argv[1:] or ["palline", "ghirlanda", "ramo", "pupazzi"]
     if "palline" in cosa:
         crea_palline()
     if "ghirlanda" in cosa:
         crea_ghirlanda()
     if "ramo" in cosa:
         crea_ramo()
+    if "pupazzi" in cosa:
+        crea_pupazzi()
