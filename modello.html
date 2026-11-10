@@ -32,18 +32,20 @@ body{
 #neve{position:fixed;inset:0;pointer-events:none;z-index:2}
 .serif{font-family:"Cormorant Garamond",Georgia,serif}
 
-/* Ghirlanda di abete con lucine e ornamenti appesi (disegnata dal codice) */
-#ghirlanda{position:fixed;top:0;left:0;width:100%;height:170px;z-index:6;pointer-events:none;overflow:visible}
-#ghirlanda .lamp{animation:luce 3s infinite ease-in-out}
-#ghirlanda .lamp.l1{animation-duration:2.3s}
-#ghirlanda .lamp.l2{animation-duration:3.4s;animation-delay:-1s}
-#ghirlanda .lamp.l3{animation-duration:4.1s;animation-delay:-2s}
-@keyframes luce{0%,100%{opacity:1}50%{opacity:.4}}
-#ghirlanda .dond{animation:dondola 5.5s infinite ease-in-out}
+/* Ghirlanda di abete: immagine ripetuta + lucine che brillano + palline che dondolano */
+#ghirlanda{position:fixed;top:0;left:0;width:100%;height:90px;z-index:6;pointer-events:none;overflow:visible}
+#ghirlanda .tessuto{position:absolute;inset:0;background-repeat:repeat-x;background-position:0 0}
+#ghirlanda .glow{position:absolute;border-radius:50%;animation:luce 3s infinite ease-in-out}
+#ghirlanda .glow.l1{animation-duration:2.3s}
+#ghirlanda .glow.l2{animation-duration:3.4s;animation-delay:-1s}
+#ghirlanda .glow.l3{animation-duration:4.1s;animation-delay:-2s}
+@keyframes luce{0%,100%{opacity:1}50%{opacity:.35}}
+#ghirlanda .dond{position:absolute;transform-origin:50% 0;animation:dondola 5.5s infinite ease-in-out}
+#ghirlanda .dond img{display:block;width:100%;height:auto}
 @keyframes dondola{0%,100%{transform:rotate(3.5deg)}50%{transform:rotate(-3.5deg)}}
 
 /* Rami di pino negli angoli */
-.ramo{position:fixed;bottom:-14px;z-index:1;pointer-events:none;opacity:.85;width:clamp(120px,30vw,330px);height:auto;aspect-ratio:1;filter:drop-shadow(0 6px 14px rgba(0,0,0,.45))}
+.ramo{position:fixed;bottom:-6px;z-index:1;pointer-events:none;width:clamp(130px,34vw,380px);height:auto}
 .ramo.sx{left:0}
 .ramo.dx{right:0;transform:scaleX(-1)}
 
@@ -238,7 +240,7 @@ main:has(#rivela.visibile) .titolo{display:none}
 /* ===== MOBILE ===== */
 @media (max-width:440px){
   main{gap:clamp(10px,2dvh,20px)}
-  .ramo{width:34vw;bottom:-18px}
+  .ramo{width:38vw;bottom:-8px}
   .demo{font-size:.68rem}
 }
 </style>
@@ -260,11 +262,11 @@ main:has(#rivela.visibile) .titolo{display:none}
   <div class="sopra">Secret Santa</div>
   <h2>Per vedere questa pagina,<br><b>gira il telefono in verticale</b></h2>
 </div>
-<svg id="ghirlanda" aria-hidden="true"></svg>
+<div id="ghirlanda" aria-hidden="true"></div>
 
-<!-- Rami di abete (disegnati dal codice, vedi funzione abete) -->
-<svg class="ramo sx" id="ramoSx" viewBox="0 0 400 400" aria-hidden="true"></svg>
-<svg class="ramo dx" id="ramoDx" viewBox="0 0 400 400" aria-hidden="true"></svg>
+<!-- Rami di abete (immagine calcolata, vedi crea_asset_natale.py) -->
+<img class="ramo sx" src="../assets/ramo.webp" alt="" aria-hidden="true">
+<img class="ramo dx" src="../assets/ramo.webp" alt="" aria-hidden="true">
 
 <main>
   <div class="tuo"><div class="anello"><div class="fm" id="fotoTuo"></div></div></div>
@@ -351,6 +353,7 @@ main:has(#rivela.visibile) .titolo{display:none}
 
 <div id="lampo"></div>
 
+<script src="../assets/ghirlanda.js"></script>
 <script>
 const NOME="__NOME__";
 const CIFRATO="__CIFRATO__", IV="__IV__";
@@ -516,124 +519,42 @@ const Fuochi=(function(){
   sig.addEventListener("keyup",e=>{if(e.key===" "||e.key==="Enter")annulla()});
 })();
 
-/* Rami di abete: disegnati dal codice, ago per ago (con brina, bacche e palline) */
-function abete(svg,seed){
-  let st=seed;const r=()=>{st|=0;st=st+0x6D2B79F5|0;let t=Math.imul(st^st>>>15,1|st);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
-  const verdi=["#06261d","#0a3a2b","#0e4d39","#136148","#1b7a58"];
-  const grp=verdi.map(()=>[]);const brina=[];const steli=[];const punti=[];
-  const ago=(x1,y1,x2,y2,t)=>{
-    const ch=r();let c=Math.min(4,Math.floor((ch*.55+t*.55)*5));
-    const s=x1.toFixed(1)+" "+y1.toFixed(1)+"L"+x2.toFixed(1)+" "+y2.toFixed(1);
-    if(t>.35&&r()<.14)brina.push(s);else grp[c].push(s);
-  };
-  function ramo(x,y,a,len,w,prof,curva){
-    const passo=3.1,n=Math.round(len/passo);let px=x,py=y;const pts=[];
-    for(let i=0;i<n;i++){
-      const t=i/n,dir=a+Math.sin(t*3.2+curva)*.16;
-      px+=Math.cos(dir)*passo;py+=Math.sin(dir)*passo;pts.push([px,py,dir,t]);
-      const L=w*(1-t*.72)*(.8+r()*.4);
-      for(const lato of[-1,1]){
-        for(let k=0;k<2;k++){
-          const na=dir+lato*(1.12-.5*t)+(r()-.5)*.3,l=L*(k?.7:1);
-          ago(px,py,px+Math.cos(na)*l,py+Math.sin(na)*l,t);
-        }
-      }
-      if(prof<2&&i%10===5&&t>.12&&t<.8){
-        ramo(px,py,dir+(i%20===5?-1:1)*.85,len*(.36-.06*prof),w*.72,prof+1,r()*6);
-      }
-    }
-    steli.push("M"+x.toFixed(1)+" "+y.toFixed(1)+pts.map(q=>"L"+q[0].toFixed(1)+" "+q[1].toFixed(1)).join(""));
-    if(prof===0)punti.push(pts);
-  }
-  const rad=d=>d*Math.PI/180;
-  ramo(-8,410,rad(-18),370,34,0,1);
-  ramo(-8,410,rad(-42),335,32,0,2);
-  ramo(-8,410,rad(-67),290,30,0,3);
-  ramo(-8,410,rad(-86),215,26,0,4);
-  let h='<defs><radialGradient id="aR'+seed+'" cx="35%" cy="30%"><stop offset="0" stop-color="#ff8a95"/><stop offset=".55" stop-color="#b3182b"/><stop offset="1" stop-color="#5a0713"/></radialGradient>'+
-    '<radialGradient id="aO'+seed+'" cx="35%" cy="30%"><stop offset="0" stop-color="#fff4cc"/><stop offset=".5" stop-color="#e8c274"/><stop offset="1" stop-color="#8a5f17"/></radialGradient></defs>';
-  h+='<path d="'+steli.map(s=>s).join("")+'" stroke="#2a1a0e" stroke-width="2.6" fill="none" stroke-linecap="round"/>';
-  grp.forEach((g,i)=>{h+='<path d="'+g.map(s=>"M"+s).join("")+'" stroke="'+verdi[i]+'" stroke-width="'+(1.5+i*.12)+'" stroke-linecap="round" fill="none"/>'});
-  h+='<path d="'+brina.map(s=>"M"+s).join("")+'" stroke="#eaf5ef" stroke-opacity=".8" stroke-width="1.3" stroke-linecap="round" fill="none"/>';
-  const palla=(x,y,rr,g,f)=>'<g><line x1="'+x+'" y1="'+(y-rr)+'" x2="'+x+'" y2="'+(y-rr-6)+'" stroke="#e8c274" stroke-width="1.4"/><circle cx="'+x+'" cy="'+y+'" r="'+rr+'" fill="url(#'+g+seed+')"/><ellipse cx="'+(x-rr*.35)+'" cy="'+(y-rr*.4)+'" rx="'+rr*.28+'" ry="'+rr*.4+'" fill="#fff" opacity=".4" transform="rotate(-30 '+(x-rr*.35)+' '+(y-rr*.4)+')"/></g>';
-  const bacche=(x,y)=>{let o='';[[0,0,5],[7,3,4.4],[-5,6,4.2]].forEach(b=>{o+='<circle cx="'+(x+b[0])+'" cy="'+(y+b[1])+'" r="'+b[2]+'" fill="url(#aR'+seed+')"/><circle cx="'+(x+b[0]-1.5)+'" cy="'+(y+b[1]-1.6)+'" r="1.2" fill="#fff" opacity=".6"/>'});return o};
-  const q=(i,t)=>punti[i][Math.floor(punti[i].length*t)];
-  let p;
-  p=q(0,.62);h+=palla(p[0],p[1]+14,12,"aR");
-  p=q(1,.72);h+=palla(p[0],p[1]+12,10,"aO");
-  p=q(2,.55);h+=palla(p[0],p[1]+12,9,"aR");
-  p=q(0,.3);h+=bacche(p[0],p[1]);
-  p=q(1,.45);h+=bacche(p[0],p[1]);
-  p=q(2,.8);h+=bacche(p[0],p[1]);
-  p=q(3,.6);h+=palla(p[0],p[1]+10,8,"aO");
-  svg.innerHTML=h;
-}
-abete($("ramoSx"),7);abete($("ramoDx"),19);
 
-/* Ghirlanda di abete: festoni, lucine che brillano e ornamenti che dondolano */
+
+/* Ghirlanda: l'immagine del festone si ripete; sopra, le luci che brillano e le palline che dondolano */
 function ghirlanda(){
-  const svg=$("ghirlanda"),W=innerWidth,H=170;
-  svg.setAttribute("viewBox","0 0 "+W+" "+H);
-  let st=11;const r=()=>{st|=0;st=st+0x6D2B79F5|0;let t=Math.imul(st^st>>>15,1|st);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
-  const n=Math.max(2,Math.round(W/200)),sw=W/n,sag=Math.min(44,sw*.2),y0=4;
-  const P=(i,t)=>{const x0=i*sw,x1=x0+sw,cx=x0+sw/2,cy=y0+2*sag,u=1-t;
-    return{x:u*u*x0+2*u*t*cx+t*t*x1,y:u*u*y0+2*u*t*cy+t*t*y0,dx:2*u*(cx-x0)+2*t*(x1-cx),dy:2*u*(cy-y0)+2*t*(y0-cy)}};
-  const verdi=["#06261d","#0a3a2b","#0e4d39","#136148","#1b7a58"];
-  const grp=verdi.map(()=>[]),brina=[];
-  for(let i=0;i<n;i++){
-    const cnt=Math.round(sw/1.5);
-    for(let k=0;k<=cnt;k++){
-      const p=P(i,k/cnt),f=Math.atan2(p.dy,p.dx);
-      for(const lato of[-1,1])for(let j=0;j<2;j++){
-        const a=f+lato*(1.1+r()*.5)+(j?.25:-.15),L=(7+r()*8)*(j?.75:1);
-        const sg=p.x.toFixed(1)+" "+p.y.toFixed(1)+"L"+(p.x+Math.cos(a)*L).toFixed(1)+" "+(p.y+Math.sin(a)*L).toFixed(1);
-        if(r()<.05)brina.push(sg);else grp[Math.min(4,Math.floor((r()*.6+(lato>0?.45:.1)*r()+.2)*5))].push(sg);
-      }
-    }
-  }
-  let stelo="M0 "+y0;
-  for(let i=0;i<n;i++){const x0=i*sw;stelo+="Q"+(x0+sw/2)+" "+(y0+2*sag)+" "+(x0+sw)+" "+y0}
-  const cols=["#ff5a6b","#ffd36e","#7fe3b0","#7cc4ff","#fff1c9"];
-  let h="<defs>";
-  cols.forEach((c,i)=>{h+='<radialGradient id="gl'+i+'"><stop offset="0" stop-color="'+c+'" stop-opacity=".85"/><stop offset="1" stop-color="'+c+'" stop-opacity="0"/></radialGradient>'});
-  h+='<radialGradient id="bR" cx="35%" cy="30%"><stop offset="0" stop-color="#ff8a95"/><stop offset=".55" stop-color="#b3182b"/><stop offset="1" stop-color="#5a0713"/></radialGradient>'+
-     '<radialGradient id="bO" cx="35%" cy="30%"><stop offset="0" stop-color="#fff4cc"/><stop offset=".5" stop-color="#e8c274"/><stop offset="1" stop-color="#8a5f17"/></radialGradient>'+
-     '<radialGradient id="bG" cx="35%" cy="30%"><stop offset="0" stop-color="#6fd6a6"/><stop offset=".55" stop-color="#14684d"/><stop offset="1" stop-color="#05291f"/></radialGradient>'+
-     '<radialGradient id="bP" cx="35%" cy="30%"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#e9dfc6"/><stop offset="1" stop-color="#9c8d6a"/></radialGradient>'+
-     '<linearGradient id="gc" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a97c2c"/><stop offset=".5" stop-color="#fbe9b7"/><stop offset="1" stop-color="#a97c2c"/></linearGradient></defs>';
-  h+='<path d="'+stelo+'" stroke="#1c1208" stroke-width="3" fill="none" opacity=".9"/>';
-  grp.forEach((g,i)=>{h+='<path d="'+g.map(x=>"M"+x).join("")+'" stroke="'+verdi[i]+'" stroke-width="'+(1.5+i*.12)+'" stroke-linecap="round" fill="none"/>'});
-  h+='<path d="'+brina.map(x=>"M"+x).join("")+'" stroke="#eaf5ef" stroke-opacity=".5" stroke-width="1" stroke-linecap="round" fill="none"/>';
+  const G=window.GHIRLANDA,box=$("ghirlanda");
+  if(!G||!box)return;
+  const W=innerWidth,gh=Math.max(76,Math.min(140,W*.22)),tw=gh*G.w/G.h;
+  const off=(W/2)%tw;                       // una giuntura del festone cade sempre al centro
+  box.style.height=gh+"px";box.innerHTML="";
+  const tess=document.createElement("div");tess.className="tessuto";
+  tess.style.backgroundImage="url(../assets/ghirlanda.webp)";tess.style.backgroundSize=tw+"px "+gh+"px";
+  tess.style.backgroundPosition=off+"px 0";
+  box.appendChild(tess);
+  const da=-1,a=Math.ceil(W/tw)+1;
   // lucine
-  let idx=0;
-  for(let i=0;i<n;i++){
-    const m=Math.max(4,Math.round(sw/34));
-    for(let j=0;j<m;j++){
-      const p=P(i,(j+.5)/m),k=idx%5,c=cols[k],x=p.x,y=p.y+2;idx++;
-      h+='<g class="lamp l'+(idx%4)+'"><circle cx="'+x.toFixed(1)+'" cy="'+(y+9).toFixed(1)+'" r="15" fill="url(#gl'+k+')"/>'+
-        '<rect x="'+(x-2.3).toFixed(1)+'" y="'+y.toFixed(1)+'" width="4.6" height="5" rx="1" fill="#2a2a2a"/>'+
-        '<path d="M'+(x-3.8).toFixed(1)+' '+(y+4.5).toFixed(1)+'Q'+(x-5.2).toFixed(1)+' '+(y+12.5).toFixed(1)+' '+x.toFixed(1)+' '+(y+14.5).toFixed(1)+'Q'+(x+5.2).toFixed(1)+' '+(y+12.5).toFixed(1)+' '+(x+3.8).toFixed(1)+' '+(y+4.5).toFixed(1)+'Z" fill="'+c+'"/>'+
-        '<ellipse cx="'+(x-1.4).toFixed(1)+'" cy="'+(y+9).toFixed(1)+'" rx="1.1" ry="2.6" fill="#fff" opacity=".65"/></g>';
-    }
+  let k=0;
+  for(let i=da;i<=a;i++)G.lampadine.forEach(l=>{
+    const x=off+i*tw+l.x*tw,d=gh*.62;
+    if(x<-d||x>W+d)return;
+    const g=document.createElement("div");
+    g.className="glow l"+(k++%4);
+    g.style.cssText="left:"+(x-d/2).toFixed(1)+"px;top:"+(l.y*gh-d/2).toFixed(1)+"px;width:"+d.toFixed(1)+"px;height:"+d.toFixed(1)+"px;background:radial-gradient(circle,"+l.c+"cc 0%,"+l.c+"55 32%,"+l.c+"00 68%)";
+    box.appendChild(g);
+  });
+  // palline appese alle giunture del festone
+  const tipi=["rossa","oro","verde","perla"];
+  let n=0;
+  for(let i=da;i<=a;i++){
+    const x=off+i*tw;
+    if(x<18||x>W-18)continue;
+    const w=gh*.42,el=document.createElement("div"),im=new Image();
+    im.src="../assets/palla-"+tipi[n%4]+".webp";im.alt="";
+    el.className="dond";
+    el.style.cssText="left:"+(x-w/2).toFixed(1)+"px;top:"+(G.y0*gh-6).toFixed(1)+"px;width:"+w.toFixed(1)+"px;animation-delay:"+(-n*1.3)+"s";
+    el.appendChild(im);box.appendChild(el);n++;
   }
-  // ornamenti appesi
-  const orn=(x,y,len,rr,t,bow,d)=>{
-    const cy=y+len+rr;let o='<g class="dond" style="transform-origin:'+x.toFixed(1)+'px '+y.toFixed(1)+'px;animation-delay:'+d+'s">';
-    o+='<line x1="'+x.toFixed(1)+'" y1="'+y.toFixed(1)+'" x2="'+x.toFixed(1)+'" y2="'+(y+len-2).toFixed(1)+'" stroke="#e8c274" stroke-width="1.1"/>';
-    o+='<rect x="'+(x-rr*.3).toFixed(1)+'" y="'+(y+len-5).toFixed(1)+'" width="'+(rr*.6).toFixed(1)+'" height="6.5" rx="1.6" fill="url(#gc)"/>';
-    o+='<circle cx="'+x.toFixed(1)+'" cy="'+(y+len-6).toFixed(1)+'" r="2" fill="none" stroke="#e8c274" stroke-width="1"/>';
-    o+='<circle cx="'+x.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="'+rr+'" fill="url(#b'+t+')"/>';
-    o+='<path d="M'+(x-rr*.97).toFixed(1)+' '+(cy+rr*.12).toFixed(1)+'Q'+x.toFixed(1)+' '+(cy+rr*.55).toFixed(1)+' '+(x+rr*.97).toFixed(1)+' '+(cy+rr*.12).toFixed(1)+'" stroke="'+(t==="P"?"#b3182b":"#fbe9b7")+'" stroke-width="'+(rr*.14).toFixed(1)+'" fill="none" opacity=".85"/>';
-    for(let q=0;q<7;q++){const a=r()*6.28,dd=r()*rr*.8;o+='<circle cx="'+(x+Math.cos(a)*dd).toFixed(1)+'" cy="'+(cy+Math.sin(a)*dd).toFixed(1)+'" r=".9" fill="#fff" opacity=".5"/>'}
-    o+='<ellipse cx="'+(x-rr*.35).toFixed(1)+'" cy="'+(cy-rr*.4).toFixed(1)+'" rx="'+(rr*.26).toFixed(1)+'" ry="'+(rr*.4).toFixed(1)+'" fill="#fff" opacity=".42" transform="rotate(-30 '+(x-rr*.35).toFixed(1)+' '+(cy-rr*.4).toFixed(1)+')"/>';
-    if(bow){const by=y+len-7;o+='<path d="M'+x.toFixed(1)+' '+by.toFixed(1)+'C'+(x-11).toFixed(1)+' '+(by-9).toFixed(1)+' '+(x-12).toFixed(1)+' '+(by+3).toFixed(1)+' '+x.toFixed(1)+' '+by.toFixed(1)+'C'+(x+11).toFixed(1)+' '+(by+3).toFixed(1)+' '+(x+10).toFixed(1)+' '+(by-9).toFixed(1)+' '+x.toFixed(1)+' '+by.toFixed(1)+'Z" fill="#b3182b" stroke="#6a0c18" stroke-width=".6"/><circle cx="'+x.toFixed(1)+'" cy="'+by.toFixed(1)+'" r="2.2" fill="#d62839"/>'}
-    return o+"</g>";
-  };
-  const rr=Math.max(12,Math.min(20,W/30));
-  const lista=[[0,.13,34,rr,"R",true],[n-1,.87,40,rr*.95,"O",false]];
-  if(W>=600){for(let i=1;i<n;i++)lista.push([i,0,30+(i%2)*10,rr*(i%2?.8:.9),["G","P","R","O"][i%4],i%3===0])}
-  lista.forEach((q,i)=>{const p=P(q[0],q[1]);h+=orn(p.x,p.y+1,q[2],q[3],q[4],q[5],-i*1.3)});
-  svg.innerHTML=h;
 }
 let _larg=innerWidth;
 addEventListener("resize",()=>{if(innerWidth!==_larg){_larg=innerWidth;ghirlanda()}});
