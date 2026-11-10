@@ -580,13 +580,8 @@ def crea_pupazzo(stile):
     tela = L["corpo"]
     yy, xx = np.mgrid[0:H, 0:W].astype(float)
 
-    # cumulo di neve e ombra a terra
-    mound = maschera_pil(W, H, lambda d, s: d.ellipse([60 * s, 800 * s, 640 * s, 905 * s], fill=255))
-    mound = ndi.gaussian_filter(mound, 14)
-    sfum = np.clip((yy - 800) / 110.0, 0, 1)
-    colm = np.array([248.0, 251.0, 255.0])[None, None, :] * (1 - 0.18 * sfum)[..., None] + np.array([190.0, 208.0, 240.0])[None, None, :] * (0.18 * sfum)[..., None]
-    tela.sopra(colm, mound * 0.97)
-    ombra = ndi.gaussian_filter(maschera_pil(W, H, lambda d, s: d.ellipse([170 * s, 820 * s, 560 * s, 880 * s], fill=255)), 14) * 0.45
+    # ombra morbida a terra (il suolo di neve e' un'immagine a parte)
+    ombra = ndi.gaussian_filter(maschera_pil(W, H, lambda d, s: d.ellipse([190 * s, 842 * s, 540 * s, 884 * s], fill=255)), 9) * 0.40
     tela.sopra(np.ones((H, W, 3)) * np.array([90.0, 110.0, 160.0]), ombra)
 
     # tre sfere di neve
@@ -707,9 +702,78 @@ def crea_pupazzi():
         print(lato, "dimensioni", cw, ch, "| spalla sx", pc(300, 505), "| spalla dx", pc(400, 505), "| coda", pc(423, 466), "| occhi", pc(350, 346))
 
 
+# =====================================================================
+#   SUOLO INNEVATO (striscia continua ripetibile in orizzontale)
+# =====================================================================
+def crea_suolo():
+    S = 2
+    W, H = 1200 * S, 190 * S
+    yy, xx = np.mgrid[0:H, 0:W].astype(float)
+    u = xx / W * 2 * math.pi
+
+    def cresta(base, seno, seed):
+        y = np.full(W, base * H)
+        xs = np.arange(W)
+        uu = xs / W * 2 * math.pi
+        for cicli, amp, fase in seno:
+            y += amp * S * np.sin(cicli * uu + fase)
+        n = ndi.gaussian_filter(np.random.default_rng(seed).standard_normal(W), 26 * S, mode="wrap")
+        n = n / (n.std() + 1e-9)
+        y += 3.0 * S * n
+        return y
+
+    def strato(cr, c_alto, c_basso, scala_ombra):
+        d = yy - cr[None, :]                     # distanza sotto la cresta (px)
+        a = np.clip(d / 1.4 + 0.5, 0, 1)          # bordo morbido
+        t = np.clip(d / (scala_ombra * S), 0, 1)
+        t = t * t * (3 - 2 * t)
+        col = np.array(c_alto)[None, None, :] * (1 - t[..., None]) + np.array(c_basso)[None, None, :] * t[..., None]
+        # riflesso luminoso sulla cresta
+        rim = np.exp(-(np.clip(d, 0, None) / (3.5 * S)) ** 2) * (d >= 0)
+        col = col + 14 * rim[..., None]
+        # ombre bluastre sulle pendenze rivolte a destra (luce da sinistra)
+        pend = np.gradient(cr)
+        ombra = np.clip(pend, 0, None)[None, :] * 1.6
+        ombra = ndi.gaussian_filter(ombra, (0, 6 * S))
+        col = col - np.array([30.0, 18.0, 4.0])[None, None, :] * np.clip(ombra * np.exp(-(np.clip(d, 0, None) / (26 * S))), 0, 1)[..., None]
+        return col, a
+
+    out_rgb = np.zeros((H, W, 3))
+    out_a = np.zeros((H, W))
+
+    # colline lontane
+    cr_b = cresta(0.20, ((2, 7, 1.0), (5, 4, 0.2), (9, 2.2, 2.1)), 11)
+    rgb_b, a_b = strato(cr_b, (214, 228, 250), (168, 192, 232), 60)
+    out_rgb = rgb_b * a_b[..., None] + out_rgb * (1 - a_b[..., None])
+    out_a = a_b + out_a * (1 - a_b)
+
+    # ombra proiettata dalla collina davanti
+    cr_f = cresta(0.40, ((2, 9, 4.0), (4, 6, 0.6), (7, 3.5, 1.7), (13, 1.6, 2.6)), 23)
+    d_f = yy - cr_f[None, :]
+    cast = np.exp(-(np.clip(-d_f, 0, None) / (9 * S)) ** 2) * (d_f < 0) * 0.30
+    out_rgb = out_rgb * (1 - cast[..., None]) + np.array([120.0, 144.0, 200.0]) * cast[..., None] * out_a[..., None]
+
+    # collina davanti
+    rgb_f, a_f = strato(cr_f, (254, 254, 255), (206, 222, 248), 85)
+    out_rgb = rgb_f * a_f[..., None] + out_rgb * (1 - a_f[..., None])
+    out_a = a_f + out_a * (1 - a_f)
+
+    # piccole irregolarita' e scintillii
+    grana = fractal((H, W), [3, 1.2], [1, 1], 5)
+    out_rgb = out_rgb * (1 + 0.012 * grana)[..., None]
+    sp = (np.random.default_rng(8).random((H, W)) > 0.9985).astype(float)
+    sp = ndi.gaussian_filter(sp, 0.9 * S) * 7
+    out_rgb = out_rgb + 90 * sp[..., None] * (out_a[..., None] > 0.9)
+
+    arr = np.dstack([np.clip(out_rgb, 0, 255), out_a * 255]).astype(np.uint8)
+    im = Image.fromarray(arr, "RGBA").resize((W // S, H // S), Image.LANCZOS)
+    im.save(os.path.join(USCITA, "suolo.webp"), quality=90, method=6)
+    print("suolo", im.size, os.path.getsize(os.path.join(USCITA, "suolo.webp")) // 1024, "KB")
+
+
 if __name__ == "__main__":
     import sys
-    cosa = sys.argv[1:] or ["palline", "ghirlanda", "ramo", "pupazzi"]
+    cosa = sys.argv[1:] or ["palline", "ghirlanda", "ramo", "pupazzi", "suolo"]
     if "palline" in cosa:
         crea_palline()
     if "ghirlanda" in cosa:
@@ -718,3 +782,5 @@ if __name__ == "__main__":
         crea_ramo()
     if "pupazzi" in cosa:
         crea_pupazzi()
+    if "suolo" in cosa:
+        crea_suolo()

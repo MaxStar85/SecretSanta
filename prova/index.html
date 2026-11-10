@@ -45,15 +45,17 @@ body{
 @keyframes dondola{0%,100%{transform:rotate(3.5deg)}50%{transform:rotate(-3.5deg)}}
 
 /* Rami di pino negli angoli */
-.pup{position:fixed;bottom:-2px;z-index:1;pointer-events:none;width:clamp(58px,min(17vw,12.5dvh),170px);transform-origin:50% 100%;animation:pupDondola 4.2s ease-in-out infinite}
-.pup.sx{left:clamp(0px,1vw,20px);aspect-ratio:312/362;--sy:45.4%;--cy:40.1%;--ey:23.5%}
-.pup.dx{right:clamp(0px,1vw,20px);aspect-ratio:312/332;--sy:40.5%;--cy:34.6%;--ey:16.6%;animation-delay:-1.7s}
+:root{--sh:clamp(24px,3.7dvh,40px)}
+#suolo{position:fixed;left:0;right:0;bottom:0;height:var(--sh);z-index:2;pointer-events:none;background:url(../assets/suolo.webp) repeat-x 0 100%/auto 100%}
+.pup{position:fixed;bottom:calc(var(--sh) * .34);z-index:1;pointer-events:none;width:clamp(50px,min(14.8vw,11.2dvh),150px);transform-origin:50% 100%;animation:pupDondola 4.2s ease-in-out infinite}
+.pup.sx{left:clamp(0px,1vw,20px);aspect-ratio:266/362;--sy:45.4%;--cy:40.1%;--ey:23.5%}
+.pup.dx{right:clamp(0px,1vw,20px);aspect-ratio:266/332;--sy:40.5%;--cy:34.6%;--ey:16.6%;animation-delay:-1.7s}
 .pup .l{position:absolute;inset:0;width:100%;height:100%;display:block}
-.pup .bsx{transform-origin:42% var(--sy);animation:saluta 2.6s ease-in-out infinite}
-.pup .bdx{transform-origin:58% var(--sy);animation:salutaD 2.6s ease-in-out 1.3s infinite}
+.pup .bsx{transform-origin:39.5% var(--sy);animation:saluta 2.6s ease-in-out infinite}
+.pup .bdx{transform-origin:58.3% var(--sy);animation:salutaD 2.6s ease-in-out 1.3s infinite}
 .pup.dx .bsx{animation-delay:.9s}
-.pup .coda{transform-origin:61.7% var(--cy);animation:codaVento 3.2s ease-in-out infinite}
-.pup .occhi{transform-origin:50% var(--ey);animation:sbatte 5.5s infinite}
+.pup .coda{transform-origin:62.6% var(--cy);animation:codaVento 3.2s ease-in-out infinite}
+.pup .occhi{transform-origin:48.9% var(--ey);animation:sbatte 5.5s infinite}
 .pup.dx .occhi{animation-delay:-2.2s}
 @keyframes pupDondola{0%,100%{transform:rotate(-1.3deg)}50%{transform:rotate(1.3deg) scaleY(1.012)}}
 @keyframes saluta{0%,100%{transform:rotate(0)}50%{transform:rotate(17deg)}}
@@ -142,7 +144,7 @@ h1{font-family:"Cinzel",serif;font-weight:700;font-size:clamp(1.9rem,min(7vw,6.5
 #gira h2 b{color:var(--oro-chiaro);font-style:italic}
 @media (max-width:980px) and (orientation:landscape){
   #gira{display:flex}
-  main,#ghirlanda,.pup{display:none}
+  main,#ghirlanda,.pup,#suolo{display:none}
   body{overflow:hidden}
 }
 
@@ -275,6 +277,7 @@ main:has(#rivela.visibile) .titolo{display:none}
 </div>
 <div id="ghirlanda" aria-hidden="true"></div>
 
+<div id="suolo" aria-hidden="true"></div>
 <!-- Pupazzi di neve (immagini calcolate, vedi crea_asset_natale.py) -->
 <div class="pup sx" aria-hidden="true"><img class="l bsx" src="../assets/pupazzo-sx-bsx.webp" alt=""><img class="l bdx" src="../assets/pupazzo-sx-bdx.webp" alt=""><img class="l corpo" src="../assets/pupazzo-sx-corpo.webp" alt=""><img class="l occhi" src="../assets/pupazzo-sx-occhi.webp" alt=""><img class="l coda" src="../assets/pupazzo-sx-coda.webp" alt=""></div>
 <div class="pup dx" aria-hidden="true"><img class="l bsx" src="../assets/pupazzo-dx-bsx.webp" alt=""><img class="l bdx" src="../assets/pupazzo-dx-bdx.webp" alt=""><img class="l corpo" src="../assets/pupazzo-dx-corpo.webp" alt=""><img class="l occhi" src="../assets/pupazzo-dx-occhi.webp" alt=""><img class="l coda" src="../assets/pupazzo-dx-coda.webp" alt=""></div>
