@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta name="robots" content="noindex,nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Secret Santa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Cinzel:wght@500;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ===== BASE ===== */
+:root{
+  --bg1:#07201a; --bg2:#0d3a2e; --bg3:#2a0d14;
+  --oro:#e8c274; --oro-chiaro:#fbe9b7; --oro-scuro:#a97c2c;
+  --rosso:#b3182b; --crema:#fbf3df;
+  --vetro:rgba(255,248,230,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg1)}
+body{
+  min-height:100dvh; background-attachment:fixed; font-family:"Inter",system-ui,sans-serif; color:var(--crema);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%,rgba(232,194,116,.18),transparent 70%),
+    radial-gradient(ellipse at 50% 110%,var(--bg3),transparent 60%),
+    linear-gradient(180deg,var(--bg2),var(--bg1));
+  overflow-x:hidden; position:relative;
+}
+#neve{position:fixed;inset:0;pointer-events:none;z-index:2}
+.serif{font-family:"Cormorant Garamond",Georgia,serif}
+
+/* Ghirlanda in alto */
+#ghirlanda{position:fixed;top:0;left:0;width:100%;height:90px;z-index:6;pointer-events:none}
+#ghirlanda .lampadina{animation:luce 3s infinite ease-in-out}
+@keyframes luce{0%,100%{opacity:1}50%{opacity:.45}}
+
+/* Palline appese */
+.pallina{position:fixed;top:0;z-index:5;transform-origin:50% 0;animation:dondola 5s infinite ease-in-out;pointer-events:none}
+.pallina.p1{left:5%;animation-delay:-1s}
+.pallina.p2{left:12%;animation-delay:-3s;scale:.75}
+.pallina.p3{right:6%;animation-delay:-2s}
+.pallina.p4{right:13%;animation-delay:-4s;scale:.7}
+@keyframes dondola{0%,100%{transform:rotate(4deg)}50%{transform:rotate(-4deg)}}
+
+/* Rami di pino negli angoli */
+.ramo{position:fixed;bottom:-10px;z-index:1;pointer-events:none;opacity:.9}
+.ramo.sx{left:-20px}
+.ramo.dx{right:-20px;transform:scaleX(-1)}
+
+main{position:relative;z-index:3;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:110px 18px 120px;gap:26px;text-align:center}
+
+/* Titolo */
+.titolo{display:flex;flex-direction:column;align-items:center;gap:8px}
+.titolo .sopra{font-family:"Cinzel",serif;font-size:clamp(.75rem,2vw,.95rem);letter-spacing:.45em;color:var(--oro);text-transform:uppercase}
+h1{font-family:"Cinzel",serif;font-weight:700;font-size:clamp(2.2rem,7vw,4.2rem);letter-spacing:.08em;
+  background:linear-gradient(180deg,var(--oro-chiaro),var(--oro) 55%,var(--oro-scuro));-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 14px rgba(232,194,116,.35))}
+.filo{display:flex;align-items:center;gap:12px;color:var(--oro)}
+.filo::before,.filo::after{content:"";width:clamp(50px,14vw,120px);height:1px;background:linear-gradient(90deg,transparent,var(--oro))}
+.filo::after{transform:scaleX(-1)}
+
+/* ===== SCHERMATA 1: busta sigillata ===== */
+#intro{display:flex;flex-direction:column;align-items:center;gap:22px;max-width:520px}
+#intro.nascosto{display:none}
+.saluto{font-family:"Cormorant Garamond",serif;font-size:clamp(1.5rem,4.5vw,2.2rem);line-height:1.25;font-weight:500}
+.saluto b{font-style:italic;color:var(--oro-chiaro);font-weight:600}
+.busta{background:none;border:0;cursor:pointer;width:min(320px,80vw);animation:fluttua 4s infinite ease-in-out;filter:drop-shadow(0 18px 30px rgba(0,0,0,.45));transition:transform .3s}
+.busta:hover{transform:scale(1.04) rotate(-1deg)}
+.busta svg{width:100%;height:auto;display:block}
+@keyframes fluttua{0%,100%{translate:0 0}50%{translate:0 -10px}}
+.invito{font-family:"Cinzel",serif;font-size:.8rem;letter-spacing:.3em;text-transform:uppercase;color:var(--oro);animation:pulsa 2.4s infinite}
+@keyframes pulsa{50%{opacity:.4}}
+
+/* ===== SCHERMATA 2 ===== */
+#rivela{display:none;width:100%;max-width:1000px;flex-direction:column;align-items:center;gap:26px}
+#rivela.visibile{display:flex}
+.scena{display:flex;align-items:center;justify-content:center;gap:clamp(10px,3vw,40px);width:100%}
+.lato{flex:1;max-width:350px;position:relative;padding:34px 18px 28px;border-radius:26px;
+  background:linear-gradient(160deg,rgba(255,248,230,.12),rgba(255,248,230,.03));
+  border:1px solid rgba(232,194,116,.45);backdrop-filter:blur(8px);
+  box-shadow:0 20px 50px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.15);opacity:0;transform:translateY(36px)}
+.lato::before{content:"";position:absolute;inset:7px;border-radius:20px;border:1px solid rgba(232,194,116,.18);pointer-events:none}
+.visibile .lato.chi{animation:entra 1s .15s forwards}
+.visibile .lato.dest{animation:entra 1s 1.5s forwards}
+.etichetta{font-family:"Cinzel",serif;font-size:.78rem;letter-spacing:.3em;text-transform:uppercase;color:var(--oro);margin-bottom:18px}
+.nome{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:clamp(1.8rem,4.6vw,2.7rem);margin-top:18px;line-height:1}
+
+/* Cornice foto (qui va l'immagine) */
+.cornice{width:clamp(120px,25vw,210px);aspect-ratio:1;margin:0 auto;border-radius:50%;padding:5px;position:relative;
+  background:conic-gradient(from 20deg,var(--oro-chiaro),var(--oro-scuro),var(--oro),var(--oro-chiaro),var(--oro-scuro),var(--oro-chiaro));
+  box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.cornice .foto{width:100%;height:100%;border-radius:50%;overflow:hidden;border:4px solid var(--bg1);
+  background:radial-gradient(circle at 30% 25%,#1c5a47,#0a2b22);display:flex;align-items:center;justify-content:center;flex-direction:column}
+.cornice img{width:100%;height:100%;object-fit:cover;display:block}
+.segnaposto{font-family:"Cormorant Garamond",serif;font-size:clamp(2.6rem,7vw,4.4rem);color:var(--oro);line-height:1}
+.segnaposto small{display:block;font-family:"Inter",sans-serif;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:#a9c9bd;margin-top:6px}
+.badge{position:absolute;width:clamp(44px,9vw,68px);height:auto;z-index:2}
+.badge.cappello{top:-30%;right:-14%;transform:rotate(14deg);filter:drop-shadow(0 4px 6px rgba(0,0,0,.4))}
+.badge.stella{bottom:-4%;right:-6%;animation:ruota 8s linear infinite;filter:drop-shadow(0 0 10px rgba(232,194,116,.8))}
+@keyframes ruota{to{transform:rotate(360deg)}}
+.dest .cornice{animation:alone 3s infinite ease-in-out}
+@keyframes alone{50%{box-shadow:0 0 0 6px rgba(232,194,116,.12),0 0 50px 8px rgba(232,194,116,.45)}}
+
+/* Freccia */
+.freccia{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;color:var(--oro)}
+.freccia svg{width:clamp(46px,8vw,84px);height:auto;overflow:visible}
+.freccia small{font-family:"Cinzel",serif;font-size:.68rem;letter-spacing:.3em;text-transform:uppercase;color:var(--crema)}
+.visibile .freccia{animation:entra .7s .95s forwards}
+.freccia .punta{animation:vai 1.4s infinite ease-in-out}
+@keyframes vai{50%{transform:translateX(7px)}}
+@keyframes entra{to{opacity:1;transform:none}}
+
+.messaggio{max-width:600px;opacity:0;font-family:"Cormorant Garamond",serif;font-size:clamp(1.3rem,3.2vw,1.7rem);line-height:1.35}
+.visibile .messaggio{animation:entra 1s 2.5s forwards}
+.messaggio b{color:var(--oro-chiaro);font-style:italic}
+.segreto{opacity:0;font-family:"Cinzel",serif;font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;color:#e9a1a9;display:flex;gap:10px;align-items:center}
+.visibile .segreto{animation:entra 1s 3.1s forwards}
+
+/* Barra di prova (solo mockup) */
+.demo{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:20;background:rgba(0,0,0,.7);padding:8px 12px;border-radius:12px;font-size:.75rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:94vw}
+.demo select,.demo button{font:inherit;padding:4px 8px;border-radius:8px;border:1px solid #555;background:#222;color:#fff}
+
+
+/* ===== SCHERMATA 0: regolamento ===== */
+#regole{display:flex;flex-direction:column;align-items:center;gap:22px;max-width:620px;width:100%}
+#regole.nascosto{display:none}
+.carta{width:100%;text-align:left;padding:30px 26px;border-radius:26px;position:relative;
+  background:linear-gradient(160deg,rgba(255,248,230,.12),rgba(255,248,230,.03));
+  border:1px solid rgba(232,194,116,.45);backdrop-filter:blur(8px);box-shadow:0 20px 50px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.15)}
+.carta::before{content:"";position:absolute;inset:7px;border-radius:20px;border:1px solid rgba(232,194,116,.18);pointer-events:none}
+.carta h2{font-family:"Cinzel",serif;font-size:.85rem;letter-spacing:.3em;text-transform:uppercase;color:var(--oro);text-align:center;margin-bottom:18px}
+.regola{display:flex;gap:16px;align-items:flex-start;padding:14px 0;border-top:1px solid rgba(232,194,116,.18)}
+.regola:first-of-type{border-top:0}
+.regola .num{flex:0 0 auto;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:"Cinzel",serif;font-weight:700;color:var(--bg1);background:linear-gradient(160deg,var(--oro-chiaro),var(--oro-scuro))}
+.regola p{font-family:"Cormorant Garamond",serif;font-size:clamp(1.15rem,3vw,1.4rem);line-height:1.3}
+.regola b{color:var(--oro-chiaro)}
+.bottone{font-family:"Cinzel",serif;font-weight:700;letter-spacing:.2em;text-transform:uppercase;font-size:.85rem;color:var(--bg1);border:0;cursor:pointer;padding:16px 34px;border-radius:40px;
+  background:linear-gradient(160deg,var(--oro-chiaro),var(--oro) 50%,var(--oro-scuro));box-shadow:0 10px 26px rgba(0,0,0,.4),0 0 24px rgba(232,194,116,.3);transition:transform .2s}
+.bottone:hover{transform:translateY(-2px) scale(1.03)}
+.errore{color:#ffb3bb;font-family:"Cormorant Garamond",serif;font-size:1.3rem;max-width:420px}
+
+/* ===== TABLET (portrait) ===== */
+@media (max-width:1049.98px) and (orientation:portrait){
+  .scena{flex-direction:column}
+  .freccia{gap:0}
+  .freccia svg{width:64px;transform:rotate(90deg);margin:26px 0}
+  .freccia small{margin-top:2px}
+  .scena{gap:6px}
+  .lato{max-width:420px;width:100%}
+  .ramo{width:150px}
+}
+/* ===== MOBILE ===== */
+@media (max-width:440px){
+  main{padding-top:100px;gap:20px}
+  .pallina.p2,.pallina.p4{display:none}
+  .ramo{width:110px}
+  .demo{font-size:.68rem}
+}
+</style>
+</head>
+<body>
+<canvas id="neve"></canvas>
+<svg id="ghirlanda" aria-hidden="true"></svg>
+
+<!-- Palline appese (SVG) -->
+<svg class="pallina p1" width="46" height="120" viewBox="0 0 46 120" aria-hidden="true"><defs>
+  <radialGradient id="gR" cx="35%" cy="30%"><stop offset="0" stop-color="#ff7a85"/><stop offset=".55" stop-color="#b3182b"/><stop offset="1" stop-color="#5e0a16"/></radialGradient></defs>
+  <line x1="23" y1="0" x2="23" y2="62" stroke="#e8c274" stroke-width="1.2"/><rect x="17" y="58" width="12" height="9" rx="2" fill="#e8c274"/>
+  <circle cx="23" cy="88" r="25" fill="url(#gR)"/><ellipse cx="14" cy="77" rx="6" ry="9" fill="#fff" opacity=".35" transform="rotate(-30 14 77)"/>
+  <path d="M5 92 Q23 80 41 92" stroke="#e8c274" stroke-width="2" fill="none" opacity=".8"/></svg>
+<svg class="pallina p2" width="46" height="120" viewBox="0 0 46 120" aria-hidden="true"><defs>
+  <radialGradient id="gO" cx="35%" cy="30%"><stop offset="0" stop-color="#fff2c2"/><stop offset=".5" stop-color="#e8c274"/><stop offset="1" stop-color="#8a5f17"/></radialGradient></defs>
+  <line x1="23" y1="0" x2="23" y2="62" stroke="#e8c274" stroke-width="1.2"/><rect x="17" y="58" width="12" height="9" rx="2" fill="#b98a33"/>
+  <circle cx="23" cy="88" r="25" fill="url(#gO)"/><ellipse cx="14" cy="77" rx="6" ry="9" fill="#fff" opacity=".5" transform="rotate(-30 14 77)"/></svg>
+<svg class="pallina p3" width="46" height="120" viewBox="0 0 46 120" aria-hidden="true"><defs>
+  <radialGradient id="gG" cx="35%" cy="30%"><stop offset="0" stop-color="#5fc79b"/><stop offset=".55" stop-color="#14684d"/><stop offset="1" stop-color="#05291f"/></radialGradient></defs>
+  <line x1="23" y1="0" x2="23" y2="62" stroke="#e8c274" stroke-width="1.2"/><rect x="17" y="58" width="12" height="9" rx="2" fill="#e8c274"/>
+  <circle cx="23" cy="88" r="25" fill="url(#gG)"/><ellipse cx="14" cy="77" rx="6" ry="9" fill="#fff" opacity=".3" transform="rotate(-30 14 77)"/>
+  <path d="M23 66 L23 110 M8 88 L38 88" stroke="#e8c274" stroke-width="1.5" opacity=".6"/></svg>
+<svg class="pallina p4" width="46" height="120" viewBox="0 0 46 120" aria-hidden="true">
+  <line x1="23" y1="0" x2="23" y2="62" stroke="#e8c274" stroke-width="1.2"/><rect x="17" y="58" width="12" height="9" rx="2" fill="#e8c274"/>
+  <circle cx="23" cy="88" r="25" fill="url(#gR)"/><ellipse cx="14" cy="77" rx="6" ry="9" fill="#fff" opacity=".35" transform="rotate(-30 14 77)"/></svg>
+
+<!-- Rami di pino -->
+<svg class="ramo sx" width="260" height="200" viewBox="0 0 260 200" aria-hidden="true">
+  <g stroke="#0f5a43" stroke-width="3" stroke-linecap="round" fill="none">
+    <path d="M0 190 Q90 150 230 70"/><path d="M0 200 Q100 190 250 150"/></g>
+  <g fill="#0f5a43" opacity=".95">
+    <g id="aghi"><path d="M40 176 l-10 -34 l16 24z"/><path d="M70 165 l-6 -38 l17 28z"/><path d="M105 148 l0 -40 l16 30z"/><path d="M140 130 l6 -40 l12 34z"/><path d="M175 108 l14 -36 l8 36z"/><path d="M205 88 l22 -30 l2 38z"/></g>
+    <path d="M30 192 l-4 34 l-12 -30z" opacity="0"/>
+    <path d="M60 194 l-8 24 l22 -16z" opacity="0"/>
+    <path d="M60 192 l4 -34 l14 32z"/><path d="M100 186 l8 -34 l12 34z"/><path d="M140 176 l16 -30 l8 34z"/><path d="M180 164 l24 -22 l2 34z"/><path d="M220 152 l30 -14 l-8 32z"/>
+  </g>
+  <circle cx="125" cy="168" r="9" fill="#b3182b"/><circle cx="122" cy="165" r="3" fill="#fff" opacity=".5"/>
+  <circle cx="196" cy="120" r="8" fill="#b3182b"/><circle cx="193" cy="117" r="2.5" fill="#fff" opacity=".5"/>
+  <circle cx="60" cy="186" r="7" fill="#e8c274"/>
+</svg>
+<svg class="ramo dx" width="260" height="200" viewBox="0 0 260 200" aria-hidden="true">
+  <g fill="#0f5a43"><use href="#aghi"/></g>
+  <path d="M0 190 Q90 150 230 70" stroke="#0f5a43" stroke-width="3" fill="none"/>
+</svg>
+
+<main>
+  <header class="titolo">
+    <div class="sopra">Natale in famiglia</div>
+    <h1>Secret Santa</h1>
+    <div class="filo">
+      <svg width="22" height="22" viewBox="-12 -12 24 24"><path d="M0 -11 L2.6 -3 L11 0 L2.6 3 L0 11 L-2.6 3 L-11 0 L-2.6 -3Z" fill="currentColor"/></svg>
+    </div>
+  </header>
+
+  <!-- Schermata 0: regolamento -->
+  <section id="regole">
+    <p class="saluto">Ciao <b>__NOME__</b>,<br>benvenuto nel Secret Santa.</p>
+    <div class="carta">
+      <h2>Prima di cominciare</h2>
+      <div class="regola"><span class="num">1</span><p>Questo link è <b>solo tuo</b>. Non mostrarlo e non inoltrarlo a nessuno.</p></div>
+      <div class="regola"><span class="num">2</span><p>Il nome che scoprirai è un <b>segreto</b>: non dirlo a nessuno, fino al giorno dello scambio.</p></div>
+      <div class="regola"><span class="num">3</span><p>Il budget massimo per il regalo è di <b>50&nbsp;€</b>.</p></div>
+    </div>
+    <button class="bottone" id="continua">Ho capito</button>
+  </section>
+
+  <!-- Schermata 1: busta sigillata -->
+  <section id="intro" class="nascosto">
+    <p class="saluto">Ciao <b>__NOME__</b>,<br>è arrivato il momento di scoprire<br>a chi farai il regalo.</p>
+    <button class="busta" id="apri" aria-label="Apri la busta">
+      <svg viewBox="0 0 320 220" aria-hidden="true">
+        <defs>
+          <linearGradient id="cart" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbf3df"/><stop offset="1" stop-color="#e6d6ad"/></linearGradient>
+          <linearGradient id="lembo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4e6bf"/><stop offset="1" stop-color="#dcc791"/></linearGradient>
+          <radialGradient id="cera" cx="35%" cy="30%"><stop offset="0" stop-color="#e5384c"/><stop offset=".6" stop-color="#a5132a"/><stop offset="1" stop-color="#5a0713"/></radialGradient>
+        </defs>
+        <rect x="10" y="20" width="300" height="190" rx="10" fill="url(#cart)"/>
+        <path d="M10 30 L160 135 L310 30" fill="none" stroke="#cdb67b" stroke-width="1.5"/>
+        <path d="M10 210 L120 118 M310 210 L200 118" stroke="#cdb67b" stroke-width="1.5" fill="none"/>
+        <path d="M10 28 Q10 20 20 20 L300 20 Q310 20 310 28 L160 140Z" fill="url(#lembo)" stroke="#cdb67b" stroke-width="1.5"/>
+        <rect x="22" y="32" width="276" height="166" rx="6" fill="none" stroke="#b3182b" stroke-width="1" stroke-dasharray="3 5" opacity=".35"/>
+        <!-- sigillo di ceralacca -->
+        <circle cx="160" cy="128" r="34" fill="url(#cera)"/>
+        <circle cx="160" cy="128" r="26" fill="none" stroke="#ff8c99" stroke-width="1" opacity=".5"/>
+        <path d="M160 108 L165 122 L180 128 L165 134 L160 148 L155 134 L140 128 L155 122Z" fill="#ffd9a0" opacity=".9"/>
+        <ellipse cx="148" cy="112" rx="9" ry="5" fill="#fff" opacity=".28" transform="rotate(-35 148 112)"/>
+      </svg>
+    </button>
+    <p class="invito" id="invito">Rompi il sigillo</p>
+  </section>
+
+  <!-- Schermata 2 -->
+  <section id="rivela">
+    <div class="scena">
+      <div class="lato chi">
+        <div class="etichetta">Tu regali a</div>
+        <div class="cornice"><div class="foto" id="fotoChi"></div>
+          <svg class="badge cappello" viewBox="0 0 80 80" aria-hidden="true"><path d="M8 58 Q12 18 52 10 Q40 30 62 52Z" fill="#c41e33"/><path d="M52 10 Q62 8 66 16 Q64 26 56 24Z" fill="#c41e33"/><circle cx="62" cy="14" r="9" fill="#fff"/><rect x="4" y="52" width="62" height="14" rx="7" fill="#fff"/></svg></div>
+        <div class="nome" id="nomeChi"></div>
+      </div>
+      <div class="freccia">
+        <svg viewBox="0 0 90 30"><line x1="2" y1="15" x2="70" y2="15" stroke="currentColor" stroke-width="2" stroke-dasharray="4 5"/><path class="punta" d="M66 5 L86 15 L66 25 L72 15Z" fill="currentColor"/></svg>
+        <small>regala a</small>
+      </div>
+      <div class="lato dest">
+        <div class="etichetta">Il tuo destinatario</div>
+        <div class="cornice"><div class="foto" id="fotoDest"></div>
+          <svg class="badge stella" viewBox="-12 -12 24 24" aria-hidden="true"><path d="M0 -11 L2.6 -3 L11 0 L2.6 3 L0 11 L-2.6 3 L-11 0 L-2.6 -3Z" fill="#fbe9b7"/></svg></div>
+        <div class="nome" id="nomeDest"></div>
+      </div>
+    </div>
+    <p class="messaggio">Pensa a un regalo speciale per <b id="msgDest"></b>.<br>E mi raccomando: acqua in bocca.</p>
+    <p class="segreto">Questo è il tuo segreto</p>
+  </section>
+</main>
+
+
+<script>
+const NOME="__NOME__";
+const CIFRATO="__CIFRATO__", IV="__IV__";
+const b64=t=>Uint8Array.from(atob(t.replace(/-/g,"+").replace(/_/g,"/")),c=>c.charCodeAt(0));
+const slug=n=>n.toLowerCase().replace(/ /g,"-");
+const $=i=>document.getElementById(i);
+
+async function destinatario(){
+  const chiave=location.hash.slice(1);
+  if(!chiave||!(window.crypto&&crypto.subtle))throw new Error("no");
+  const k=await crypto.subtle.importKey("raw",b64(chiave),"AES-GCM",false,["decrypt"]);
+  const buf=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64(IV)},k,b64(CIFRATO));
+  return new TextDecoder().decode(buf);
+}
+function foto(el,nome){
+  el.innerHTML='<div class="segnaposto">'+nome[0]+'<small>foto qui</small></div>';
+  const img=new Image();img.alt=nome;
+  img.onload=()=>{el.innerHTML="";el.appendChild(img)};
+  img.src="foto/"+slug(nome)+".jpg";
+}
+$("continua").onclick=()=>{$("regole").classList.add("nascosto");$("intro").classList.remove("nascosto");scrollTo(0,0)};
+$("apri").onclick=async()=>{
+  let d;
+  try{d=await destinatario()}
+  catch(e){
+    $("invito").className="errore";
+    $("invito").textContent="Il link sembra incompleto. Apri di nuovo il link originale che ti è stato inviato, senza modificarlo.";
+    return;
+  }
+  $("nomeChi").textContent=NOME;$("nomeDest").textContent=d;$("msgDest").textContent=d;
+  foto($("fotoChi"),NOME);foto($("fotoDest"),d);
+  $("intro").classList.add("nascosto");
+  void $("rivela").offsetWidth;
+  $("rivela").classList.add("visibile");
+  scintille();
+};
+
+/* Ghirlanda con lampadine disegnate in SVG */
+function ghirlanda(){
+  const s=document.getElementById("ghirlanda"),w=innerWidth;
+  s.setAttribute("viewBox","0 0 "+w+" 90");
+  const col=["#ff5a6b","#ffd36e","#6fe3a8","#7cc4ff"];
+  let d="M-10 8",h="";
+  const n=Math.max(8,Math.round(w/70)),passo=w/n;
+  for(let i=0;i<=n;i++){
+    const x=i*passo, y=8+(i%2?26:10);
+    d+=" Q"+(x-passo/2)+" "+(i%2?40:4)+" "+x+" "+(i%2?18:10);
+  }
+  h+='<path d="'+d+'" stroke="#0a0f0d" stroke-width="2.2" fill="none"/>';
+  for(let i=1;i<n;i++){
+    const t=(i-.5)*passo, x=i*passo-passo/2, y=(i%2?30:20);
+    const c=col[i%4];
+    h+='<g class="lampadina" style="animation-delay:'+(i%4*.7)+'s"><rect x="'+(x-3)+'" y="'+(y-4)+'" width="6" height="7" fill="#333"/>'+
+       '<path d="M'+(x-6)+' '+(y+3)+' Q'+x+' '+(y+30)+' '+(x+6)+' '+(y+3)+'Z" fill="'+c+'" style="filter:drop-shadow(0 0 8px '+c+')"/></g>';
+  }
+  s.innerHTML=h;
+}
+addEventListener("resize",ghirlanda);ghirlanda();
+
+/* Neve elegante (fiocchi sfocati a profondità diverse) + scintille dorate */
+const cv=document.getElementById("neve"),cx=cv.getContext("2d");
+let W,H,fiocchi=[],pezzi=[];
+function ridim(){const r=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*r;cv.height=H*r;cx.setTransform(r,0,0,r,0,0)}
+addEventListener("resize",ridim);ridim();
+for(let i=0;i<130;i++){const z=Math.random();fiocchi.push({x:Math.random()*W,y:Math.random()*H,z,r:z*3.2+.8,v:z*1.1+.35,o:Math.random()*6.28})}
+function scintille(){
+  const col=["#fbe9b7","#e8c274","#fff","#ff9aa6","#9be8c4"];
+  for(let i=0;i<140;i++){const a=Math.random()*6.28,f=Math.random()*11+2;
+    pezzi.push({x:W/2,y:H*.45,vx:Math.cos(a)*f,vy:Math.sin(a)*f-4,c:col[i%5],s:Math.random()*4+2,l:120+Math.random()*50})}
+}
+function giro(){
+  cx.clearRect(0,0,W,H);
+  fiocchi.forEach(f=>{
+    f.y+=f.v;f.o+=.008;f.x+=Math.sin(f.o)*.5*f.z;
+    if(f.y>H+5){f.y=-5;f.x=Math.random()*W}
+    const g=cx.createRadialGradient(f.x,f.y,0,f.x,f.y,f.r*2);
+    g.addColorStop(0,"rgba(255,255,255,"+(.5+f.z*.4)+")");g.addColorStop(1,"rgba(255,255,255,0)");
+    cx.fillStyle=g;cx.beginPath();cx.arc(f.x,f.y,f.r*2,0,7);cx.fill();
+  });
+  pezzi=pezzi.filter(p=>p.l-->0);
+  pezzi.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.18;p.vx*=.97;
+    cx.globalAlpha=Math.min(1,p.l/50);cx.fillStyle=p.c;
+    cx.beginPath();cx.moveTo(p.x,p.y-p.s);cx.lineTo(p.x+p.s*.35,p.y);cx.lineTo(p.x,p.y+p.s);cx.lineTo(p.x-p.s*.35,p.y);cx.fill();cx.globalAlpha=1});
+  requestAnimationFrame(giro);
+}
+giro();
+</script>
+</body>
+</html>
