@@ -152,6 +152,14 @@ h1{font-family:"Cinzel",serif;font-weight:700;font-size:clamp(1.9rem,min(7vw,6.5
 .med.tu span::after{content:" (tu)";font-size:.8em;opacity:.8;font-weight:500}
 .med.tu .anello{box-shadow:0 0 0 3px rgba(232,194,116,.22),0 8px 20px rgba(0,0,0,.45)}
 
+/* Ritratto del proprietario del link (solo nella schermata della busta) */
+.tuo{display:none;justify-content:center;opacity:0;animation:entra 1s .1s forwards}
+main:has(#intro:not(.nascosto)) .tuo{display:flex}
+.tuo .anello{width:clamp(70px,min(24vw,13dvh),130px);aspect-ratio:1;border-radius:50%;padding:3px;
+  background:conic-gradient(from 20deg,var(--oro-chiaro),var(--oro-scuro),var(--oro),var(--oro-chiaro),var(--oro-scuro),var(--oro-chiaro));
+  box-shadow:0 8px 22px rgba(0,0,0,.45)}
+.tuo .segnaposto{font-size:2rem}.tuo .segnaposto small{display:none}
+
 /* ===== SCHERMATA 0: regolamento ===== */
 #regole{display:flex;flex-direction:column;align-items:center;gap:22px;max-width:620px;width:100%}
 #regole.nascosto{display:none}
@@ -212,6 +220,7 @@ main:has(#rivela.visibile) .titolo{display:none}
 <svg class="ramo dx" id="ramoDx" viewBox="0 0 400 400" aria-hidden="true"></svg>
 
 <main>
+  <div class="tuo"><div class="anello"><div class="fm" id="fotoTuo"></div></div></div>
   <header class="titolo">
     <div class="sopra">Natale in famiglia</div>
     <h1>Secret Santa</h1>
@@ -300,6 +309,7 @@ function foto(el,nome){
   img.onload=()=>{el.innerHTML="";el.appendChild(img)};
   img.src="../foto/"+slug(nome)+".jpg";
 }
+foto($("fotoTuo"),NOME);
 const TUTTI=["Massimo","Cristiana","Giorgia","Lorenzo","Luca","Laura","Ivo","Maria Elena","Francesca"];
 TUTTI.forEach((n,i)=>{
   const d=document.createElement("div");d.className="med"+(n===NOME?" tu":"");d.style.setProperty("--i",i);
