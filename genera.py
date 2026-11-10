@@ -18,6 +18,9 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 CARTELLA = os.path.dirname(os.path.abspath(__file__))
 USCITA = os.path.join(CARTELLA, "pagine")
 
+# Indirizzo del sito (GitHub Pages): serve per i link e per l'anteprima su WhatsApp
+BASE_URL = "https://maxstar85.github.io/SecretSanta"
+
 NOMI = ["Massimo", "Cristiana", "Giorgia", "Lorenzo", "Luca",
         "Laura", "Ivo", "Maria Elena", "Francesca"]
 
@@ -49,6 +52,11 @@ def main():
         print("Se vuoi davvero rifarla, cancella tu la cartella 'pagine' a mano.")
         sys.exit(1)
 
+    for n in NOMI:   # le card dell'anteprima devono esistere (python crea_card.py)
+        if not os.path.exists(os.path.join(CARTELLA, "assets", "card-" + n.lower().replace(" ", "-") + ".jpg")):
+            print("Manca la card di", n, "-> lancia prima: python crea_card.py")
+            sys.exit(1)
+
     with open(os.path.join(CARTELLA, "modello.html"), encoding="utf-8") as f:
         modello = f.read()
 
@@ -66,17 +74,19 @@ def main():
         iv = secrets.token_bytes(12)
         cifrato = AESGCM(chiave).encrypt(iv, abbinamenti[nome].encode("utf-8"), None)
         pagina = (modello.replace("__NOME__", nome)
+                         .replace("__SLUG__", nome.lower().replace(" ", "-"))
+                         .replace("__BASE__", BASE_URL)
                          .replace("__CIFRATO__", b64url(cifrato))
                          .replace("__IV__", b64url(iv)))
         nome_file = secrets.token_urlsafe(12) + ".html"   # non indovinabile
         with open(os.path.join(USCITA, nome_file), "w", encoding="utf-8") as f:
             f.write(pagina)
         # La chiave sta nella parte dopo il # del link: non viene mai inviata al server
-        righe.append(f"{nome}: {nome_file}#{b64url(chiave)}")
+        righe.append(f"{nome}: {BASE_URL}/pagine/{nome_file}#{b64url(chiave)}")
 
     with open(os.path.join(CARTELLA, "LINK_DA_INVIARE.txt"), "w", encoding="utf-8") as f:
-        f.write("Ogni riga = la fine del link di UNA persona.\n"
-                "Link completo = indirizzo del sito + / + la riga (comprese le lettere dopo il #).\n\n")
+        f.write("Ogni riga e' il link COMPLETO di UNA persona (comprese le lettere dopo il #).\n"
+                "Copialo per intero e mandalo solo a quella persona.\n\n")
         f.write("\n".join(righe) + "\n")
 
     print(f"Fatto: create {len(NOMI)} pagine nella cartella 'pagine'.")

@@ -10,7 +10,7 @@ with open(os.path.join(cartella, "modello.html"), encoding="utf-8") as f:
     s = f.read()
 
 # Nomi lunghi apposta, per mettere sotto stress il layout
-s = s.replace("__NOME__", "Maria Elena")
+s = s.replace("__NOME__", "Maria Elena").replace("__SLUG__", "maria-elena").replace("__BASE__", "https://maxstar85.github.io/SecretSanta")
 s = s.replace("async function destinatario(){", 'async function destinatario(){return "Cristiana";')
 
 os.makedirs(os.path.join(cartella, "prova"), exist_ok=True)
