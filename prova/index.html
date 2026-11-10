@@ -43,7 +43,7 @@ body{
 @keyframes dondola{0%,100%{transform:rotate(3.5deg)}50%{transform:rotate(-3.5deg)}}
 
 /* Rami di pino negli angoli */
-.ramo{position:fixed;bottom:0;z-index:1;pointer-events:none;width:clamp(170px,40vw,400px);height:auto;aspect-ratio:1;filter:drop-shadow(0 6px 14px rgba(0,0,0,.45))}
+.ramo{position:fixed;bottom:-14px;z-index:1;pointer-events:none;opacity:.85;width:clamp(120px,30vw,330px);height:auto;aspect-ratio:1;filter:drop-shadow(0 6px 14px rgba(0,0,0,.45))}
 .ramo.sx{left:0}
 .ramo.dx{right:0;transform:scaleX(-1)}
 
@@ -183,7 +183,7 @@ main:has(#rivela.visibile) .titolo{display:none}
 /* ===== MOBILE ===== */
 @media (max-width:440px){
   main{gap:clamp(10px,2dvh,20px)}
-  .ramo{width:44vw}
+  .ramo{width:34vw;bottom:-18px}
   .demo{font-size:.68rem}
 }
 </style>
