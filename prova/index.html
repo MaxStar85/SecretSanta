@@ -271,7 +271,7 @@ function foto(el,nome){
   el.innerHTML='<div class="segnaposto">'+nome[0]+'<small>foto qui</small></div>';
   const img=new Image();img.alt=nome;
   img.onload=()=>{el.innerHTML="";el.appendChild(img)};
-  img.src="foto/"+slug(nome)+".jpg";
+  img.src="../foto/"+slug(nome)+".jpg";
 }
 $("continua").onclick=()=>{$("regole").classList.add("nascosto");$("intro").classList.remove("nascosto");scrollTo(0,0)};
 $("apri").onclick=async()=>{
