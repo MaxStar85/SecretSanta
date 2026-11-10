@@ -173,26 +173,20 @@ main:has(#intro:not(.nascosto)) .tuo{display:flex}
 @keyframes trema{from{transform:translate(-1px,.6px) rotate(-.9deg)}to{transform:translate(1px,-.6px) rotate(.9deg)}}
 .busta.premuto,.busta.apre{animation-play-state:paused}
 .busta .meta-sx,.busta .meta-dx{transform-box:fill-box;transform-origin:center}
-.busta .lembo-chiuso,.busta .lembo-aperto{transform-box:view-box;transform-origin:160px 20px}
-.busta .lembo-aperto{opacity:0;transform:scaleY(0)}
-.busta .luce-lettera{opacity:0}
 .busta .esplosione{opacity:0;transform-box:fill-box;transform-origin:center}
 .busta.apre .prog,.busta.apre .traccia,.busta.apre .bagliore,.busta.apre .decoro-sigillo{opacity:0;transition:opacity .15s}
 .busta.apre .meta-sx{animation:spezzaSx .9s ease-out forwards}
 .busta.apre .meta-dx{animation:spezzaDx .9s ease-out forwards}
 @keyframes spezzaSx{to{transform:translate(-52px,24px) rotate(-32deg);opacity:0}}
 @keyframes spezzaDx{to{transform:translate(52px,24px) rotate(32deg);opacity:0}}
-.busta.apre .esplosione{animation:esplodi 1s ease-out forwards}
+.busta.apre .esplosione{animation:esplodi .8s ease-out forwards}
 @keyframes esplodi{from{transform:scale(.4);opacity:1}to{transform:scale(6);opacity:0}}
-.busta.apre .lembo-chiuso{animation:chiudiLembo .28s .2s ease-in forwards}
-@keyframes chiudiLembo{to{transform:scaleY(0);opacity:0}}
-.busta.apre .lembo-aperto{animation:apriLembo .45s .45s ease-out forwards}
-@keyframes apriLembo{from{transform:scaleY(0);opacity:1}to{transform:scaleY(-1);opacity:1}}
-.busta.apre .luce-lettera{animation:accendi 1s .7s forwards}
-@keyframes accendi{to{opacity:1}}
-.busta.apre .lettera{animation:saleLettera 1.1s .75s cubic-bezier(.2,.8,.2,1) forwards}
-@keyframes saleLettera{to{transform:translateY(-118px)}}
-#intro.apre-uscita{opacity:0;transform:scale(1.06);transition:opacity .5s ease,transform .5s ease}
+#intro.apre-uscita{opacity:0;transform:scale(1.12);transition:opacity .55s ease,transform .55s ease}
+#fuochi{position:fixed;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
+#lampo{position:fixed;inset:0;z-index:7;pointer-events:none;opacity:0;
+  background:radial-gradient(circle at 50% 45%,rgba(255,246,214,.97) 0%,rgba(255,211,110,.55) 38%,rgba(255,211,110,0) 72%)}
+#lampo.on{animation:lampo .9s ease-out forwards}
+@keyframes lampo{0%{opacity:0}18%{opacity:1}100%{opacity:0}}
 .busta.apre ~ .invito,#intro.apre-uscita .invito{visibility:hidden}
 
 /* ===== SCHERMATA 0: regolamento ===== */
@@ -349,6 +343,8 @@ main:has(#rivela.visibile) .titolo{display:none}
 </main>
 
 
+<div id="lampo"></div>
+
 <script>
 const NOME="__NOME__";
 const CIFRATO="__CIFRATO__", IV="__IV__";
@@ -378,6 +374,63 @@ TUTTI.forEach((n,i)=>{
 });
 $("avanti").onclick=()=>{$("copertina").classList.add("nascosto");$("regole").classList.remove("nascosto");scrollTo(0,0)};
 $("continua").onclick=()=>{$("regole").classList.add("nascosto");$("intro").classList.remove("nascosto");scrollTo(0,0)};
+/* Fuochi d'artificio: razzi che salgono ed esplodono in scoppi colorati con scie */
+const Fuochi=(function(){
+  const cv=document.createElement("canvas");cv.id="fuochi";document.body.appendChild(cv);
+  const c=cv.getContext("2d");let W,H;
+  function ridim(){const d=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;c.setTransform(d,0,0,d,0,0)}
+  addEventListener("resize",ridim);ridim();
+  const PAL={
+    oro:["#fff4cc","#ffd36e","#e8c274","#ffffff"],
+    rosso:["#ff5a6b","#ff8a95","#ffd0d5","#ffffff"],
+    verde:["#7fe3b0","#c9ffe3","#4fd18c","#ffffff"],
+    blu:["#7cc4ff","#c6e6ff","#5aa9ff","#ffffff"],
+    viola:["#d6a2ff","#f0d6ff","#b57bff","#ffffff"],
+    mix:["#ff5a6b","#ffd36e","#7fe3b0","#7cc4ff","#ffffff"]
+  };
+  let part=[],razzi=[],giro=false;
+  const R=(a,b)=>a+Math.random()*(b-a);
+  function esplodi(x,y,pal,tipo,n){
+    const col=PAL[pal]||PAL.mix,base=Math.min(W,H)*.0062;n=n||(tipo==="salice"?90:130);
+    for(let i=0;i<n;i++){
+      const a=tipo==="anello"?i/n*6.2832:R(0,6.2832);
+      const v=tipo==="anello"?base*5.2:tipo==="salice"?base*R(.8,3.4):base*R(1.2,5.6);
+      part.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,c:col[(Math.random()*col.length)|0],
+        l:1,d:tipo==="salice"?R(.004,.007):R(.009,.016),g:tipo==="salice"?.05:.03,f:tipo==="salice"?.965:.935,
+        s:tipo==="salice"?1.6:R(1.2,2.4),k:Math.random()<.12});
+    }
+    avvia();
+  }
+  function razzo(xr,yr,pal,tipo){
+    razzi.push({x:W*xr+R(-20,20),y:H+10,tx:W*xr,ty:H*yr,v:H*.017,pal,tipo,c:"#ffe9a8"});avvia();
+  }
+  function avvia(){if(!giro){giro=true;requestAnimationFrame(passo)}}
+  function passo(){
+    c.globalCompositeOperation="destination-out";c.fillStyle="rgba(0,0,0,.2)";c.fillRect(0,0,W,H);
+    c.globalCompositeOperation="lighter";
+    razzi=razzi.filter(r=>{
+      r.y-=r.v;r.x+=(r.tx-r.x)*.04;r.v*=.992;
+      c.globalAlpha=1;c.fillStyle=r.c;c.beginPath();c.arc(r.x,r.y,2.2,0,6.2832);c.fill();
+      for(let i=0;i<2;i++){part.push({x:r.x+R(-1,1),y:r.y+R(0,6),vx:R(-.3,.3),vy:R(.4,1.2),c:"#ffcf7a",l:.8,d:.05,g:.02,f:.95,s:1.2,k:false})}
+      if(r.y<=r.ty||r.v<2){esplodi(r.x,r.y,r.pal,r.tipo);return false}
+      return true;
+    });
+    part=part.filter(p=>{
+      const px=p.x,py=p.y;
+      p.vx*=p.f;p.vy=p.vy*p.f+p.g;p.x+=p.vx;p.y+=p.vy;p.l-=p.d;
+      if(p.l<=0)return false;
+      c.globalAlpha=p.k&&Math.random()<.4?.2:Math.max(0,Math.min(1,p.l*1.3));
+      c.strokeStyle=p.c;c.lineWidth=p.s;c.lineCap="round";
+      c.beginPath();c.moveTo(px,py);c.lineTo(p.x,p.y);c.stroke();
+      return true;
+    });
+    c.globalAlpha=1;
+    if(part.length||razzi.length)requestAnimationFrame(passo);
+    else{giro=false;c.globalCompositeOperation="source-over";c.clearRect(0,0,W,H)}
+  }
+  return{esplodi,razzo};
+})();
+
 (function(){
   const busta=$("apri"),sig=$("sigillo"),invito=$("invito"),TESTO=invito.textContent,DURATA=1400;
   let timer=null,aperta=false;
@@ -402,17 +455,32 @@ $("continua").onclick=()=>{$("regole").classList.add("nascosto");$("intro").clas
     }
     aperta=true;
     busta.classList.remove("premuto");busta.classList.add("apre");
-    if(navigator.vibrate)navigator.vibrate([25,40,35]);
-    scintille();
-    setTimeout(()=>$("intro").classList.add("apre-uscita"),2000);
-    setTimeout(()=>{
+    if(navigator.vibrate)navigator.vibrate([30,50,30,50,60]);
+    const rc=sig.getBoundingClientRect(),sx=rc.left+rc.width/2,sy=rc.top+rc.height/2;
+    const T=(ms,f)=>setTimeout(f,ms);
+    // 1) il sigillo esplode
+    Fuochi.esplodi(sx,sy,"oro","peonia",150);
+    Fuochi.esplodi(sx,sy,"rosso","anello",70);
+    // 2) i razzi partono
+    T(250,()=>Fuochi.razzo(.5,.28,"mix","peonia"));
+    T(500,()=>Fuochi.razzo(.2,.36,"rosso","peonia"));
+    T(700,()=>Fuochi.razzo(.82,.32,"blu","peonia"));
+    T(900,()=>Fuochi.razzo(.35,.2,"oro","salice"));
+    T(1100,()=>Fuochi.razzo(.68,.24,"verde","anello"));
+    // 3) la busta si dissolve e dal lampo si apre la pagina del destinatario
+    T(700,()=>$("intro").classList.add("apre-uscita"));
+    T(1250,()=>{$("lampo").classList.add("on")});
+    T(1400,()=>{
       $("nomeDest").textContent=d;$("msgDest").textContent=d;
       foto($("fotoDest"),d);
       $("intro").classList.add("nascosto");
       void $("rivela").offsetWidth;
       $("rivela").classList.add("visibile");
-      scintille();
-    },2500);
+    });
+    // 4) gran finale mentre compare il nome
+    T(1600,()=>{Fuochi.razzo(.25,.3,"viola","peonia");Fuochi.razzo(.75,.3,"oro","peonia")});
+    T(1900,()=>{Fuochi.razzo(.5,.18,"mix","anello");Fuochi.razzo(.12,.4,"verde","peonia");Fuochi.razzo(.88,.4,"rosso","peonia")});
+    T(2300,()=>{Fuochi.razzo(.35,.24,"oro","salice");Fuochi.razzo(.65,.24,"oro","salice");Fuochi.razzo(.5,.34,"blu","peonia")});
   }
   sig.addEventListener("pointerdown",e=>{e.preventDefault();try{sig.setPointerCapture(e.pointerId)}catch(_){}inizia()});
   ["pointerup","pointercancel","lostpointercapture"].forEach(ev=>sig.addEventListener(ev,annulla));
