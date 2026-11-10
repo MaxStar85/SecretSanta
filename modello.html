@@ -42,9 +42,9 @@ body{
 @keyframes dondola{0%,100%{transform:rotate(4deg)}50%{transform:rotate(-4deg)}}
 
 /* Rami di pino negli angoli */
-.ramo{position:fixed;bottom:-10px;z-index:1;pointer-events:none;opacity:.9}
-.ramo.sx{left:-20px}
-.ramo.dx{right:-20px;transform:scaleX(-1)}
+.ramo{position:fixed;bottom:0;z-index:1;pointer-events:none;width:clamp(170px,40vw,400px);height:auto;aspect-ratio:1;filter:drop-shadow(0 6px 14px rgba(0,0,0,.45))}
+.ramo.sx{left:0}
+.ramo.dx{right:0;transform:scaleX(-1)}
 
 main{position:relative;z-index:3;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:clamp(84px,13dvh,110px) 18px 28px;gap:clamp(12px,2.6dvh,26px);text-align:center}
 
@@ -74,18 +74,17 @@ h1{font-family:"Cinzel",serif;font-weight:700;font-size:clamp(1.9rem,min(7vw,6.5
 #rivela{display:none;width:100%;max-width:1000px;flex-direction:column;align-items:center;gap:26px}
 #rivela.visibile{display:flex}
 .scena{display:flex;align-items:center;justify-content:center;gap:clamp(10px,3vw,40px);width:100%}
-.lato{flex:1;max-width:350px;position:relative;padding:clamp(18px,3dvh,34px) 18px clamp(16px,2.6dvh,28px);border-radius:26px;
+.lato{flex:1;max-width:390px;position:relative;padding:clamp(18px,3dvh,34px) 18px clamp(16px,2.6dvh,28px);border-radius:26px;
   background:linear-gradient(160deg,rgba(255,248,230,.12),rgba(255,248,230,.03));
   border:1px solid rgba(232,194,116,.45);backdrop-filter:blur(8px);
   box-shadow:0 20px 50px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.15);opacity:0;transform:translateY(36px)}
 .lato::before{content:"";position:absolute;inset:7px;border-radius:20px;border:1px solid rgba(232,194,116,.18);pointer-events:none}
-.visibile .lato.chi{animation:entra 1s .15s forwards}
-.visibile .lato.dest{animation:entra 1s 1.5s forwards}
+.visibile .lato.dest{animation:entra 1s .2s forwards}
 .etichetta{font-family:"Cinzel",serif;font-size:.78rem;letter-spacing:.3em;text-transform:uppercase;color:var(--oro);margin-bottom:clamp(8px,1.6dvh,18px)}
 .nome{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:clamp(1.5rem,min(4.6vw,4dvh),2.7rem);margin-top:clamp(8px,1.6dvh,18px);line-height:1}
 
 /* Cornice foto (qui va l'immagine) */
-.cornice{width:clamp(72px,min(25vw,19dvh),210px);aspect-ratio:1;margin:0 auto;border-radius:50%;padding:5px;position:relative;
+.cornice{width:clamp(96px,min(42vw,27dvh),250px);aspect-ratio:1;margin:0 auto;border-radius:50%;padding:5px;position:relative;
   background:conic-gradient(from 20deg,var(--oro-chiaro),var(--oro-scuro),var(--oro),var(--oro-chiaro),var(--oro-scuro),var(--oro-chiaro));
   box-shadow:0 10px 30px rgba(0,0,0,.45)}
 .cornice .foto{width:100%;height:100%;border-radius:50%;overflow:hidden;border:4px solid var(--bg1);
@@ -100,20 +99,13 @@ h1{font-family:"Cinzel",serif;font-weight:700;font-size:clamp(1.9rem,min(7vw,6.5
 .dest .cornice{animation:alone 3s infinite ease-in-out}
 @keyframes alone{50%{box-shadow:0 0 0 6px rgba(232,194,116,.12),0 0 50px 8px rgba(232,194,116,.45)}}
 
-/* Freccia */
-.freccia{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;color:var(--oro)}
-.freccia svg{width:clamp(46px,8vw,84px);height:auto;overflow:visible}
-.freccia small{font-family:"Cinzel",serif;font-size:.68rem;letter-spacing:.3em;text-transform:uppercase;color:var(--crema)}
-.visibile .freccia{animation:entra .7s .95s forwards}
-.freccia .punta{animation:vai 1.4s infinite ease-in-out}
-@keyframes vai{50%{transform:translateX(7px)}}
 @keyframes entra{to{opacity:1;transform:none}}
 
 .messaggio{max-width:600px;opacity:0;font-family:"Cormorant Garamond",serif;font-size:clamp(1.1rem,min(3.2vw,2.8dvh),1.7rem);line-height:1.3}
-.visibile .messaggio{animation:entra 1s 2.5s forwards}
+.visibile .messaggio{animation:entra 1s 1.3s forwards}
 .messaggio b{color:var(--oro-chiaro);font-style:italic}
 .segreto{opacity:0;font-family:"Cinzel",serif;font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;color:#e9a1a9;display:flex;gap:10px;align-items:center}
-.visibile .segreto{animation:entra 1s 3.1s forwards}
+.visibile .segreto{animation:entra 1s 1.8s forwards}
 
 /* Barra di prova (solo mockup) */
 .demo{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:20;background:rgba(0,0,0,.7);padding:8px 12px;border-radius:12px;font-size:.75rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:94vw}
@@ -157,22 +149,19 @@ h1{font-family:"Cinzel",serif;font-weight:700;font-size:clamp(1.9rem,min(7vw,6.5
 /* Su ogni schermo tutto deve stare dentro lo schermo */
 main:has(#rivela.visibile) .titolo{display:none}
 @media (max-height:700px){.segreto{display:none}.titolo .sopra{display:none}}
+@media (max-height:640px){.titolo{display:none}main{padding-top:84px}}
 
 /* ===== TABLET (portrait) ===== */
 @media (max-width:1049.98px) and (orientation:portrait){
-  .scena{flex-direction:column}
-  .freccia{gap:0}
-  .freccia svg{width:52px;transform:rotate(90deg);margin:clamp(12px,2.6dvh,22px) 0}
-  .freccia small{margin-top:2px}
-  .scena{gap:6px}
   .lato{max-width:420px;width:100%}
-  .ramo{width:150px}
 }
 /* ===== MOBILE ===== */
 @media (max-width:440px){
   main{gap:clamp(10px,2dvh,20px)}
   .pallina.p2,.pallina.p4{display:none}
-  .ramo{width:110px}
+  .pallina{scale:.62}
+  .pallina.p1{left:3%}.pallina.p3{right:3%}
+  .ramo{width:44vw}
   .demo{font-size:.68rem}
 }
 </style>
@@ -215,24 +204,9 @@ main:has(#rivela.visibile) .titolo{display:none}
   <line x1="23" y1="0" x2="23" y2="62" stroke="#e8c274" stroke-width="1.2"/><rect x="17" y="58" width="12" height="9" rx="2" fill="#e8c274"/>
   <circle cx="23" cy="88" r="25" fill="url(#gR)"/><ellipse cx="14" cy="77" rx="6" ry="9" fill="#fff" opacity=".35" transform="rotate(-30 14 77)"/></svg>
 
-<!-- Rami di pino -->
-<svg class="ramo sx" width="260" height="200" viewBox="0 0 260 200" aria-hidden="true">
-  <g stroke="#0f5a43" stroke-width="3" stroke-linecap="round" fill="none">
-    <path d="M0 190 Q90 150 230 70"/><path d="M0 200 Q100 190 250 150"/></g>
-  <g fill="#0f5a43" opacity=".95">
-    <g id="aghi"><path d="M40 176 l-10 -34 l16 24z"/><path d="M70 165 l-6 -38 l17 28z"/><path d="M105 148 l0 -40 l16 30z"/><path d="M140 130 l6 -40 l12 34z"/><path d="M175 108 l14 -36 l8 36z"/><path d="M205 88 l22 -30 l2 38z"/></g>
-    <path d="M30 192 l-4 34 l-12 -30z" opacity="0"/>
-    <path d="M60 194 l-8 24 l22 -16z" opacity="0"/>
-    <path d="M60 192 l4 -34 l14 32z"/><path d="M100 186 l8 -34 l12 34z"/><path d="M140 176 l16 -30 l8 34z"/><path d="M180 164 l24 -22 l2 34z"/><path d="M220 152 l30 -14 l-8 32z"/>
-  </g>
-  <circle cx="125" cy="168" r="9" fill="#b3182b"/><circle cx="122" cy="165" r="3" fill="#fff" opacity=".5"/>
-  <circle cx="196" cy="120" r="8" fill="#b3182b"/><circle cx="193" cy="117" r="2.5" fill="#fff" opacity=".5"/>
-  <circle cx="60" cy="186" r="7" fill="#e8c274"/>
-</svg>
-<svg class="ramo dx" width="260" height="200" viewBox="0 0 260 200" aria-hidden="true">
-  <g fill="#0f5a43"><use href="#aghi"/></g>
-  <path d="M0 190 Q90 150 230 70" stroke="#0f5a43" stroke-width="3" fill="none"/>
-</svg>
+<!-- Rami di abete (disegnati dal codice, vedi funzione abete) -->
+<svg class="ramo sx" id="ramoSx" viewBox="0 0 400 400" aria-hidden="true"></svg>
+<svg class="ramo dx" id="ramoDx" viewBox="0 0 400 400" aria-hidden="true"></svg>
 
 <main>
   <header class="titolo">
@@ -283,18 +257,8 @@ main:has(#rivela.visibile) .titolo{display:none}
   <!-- Schermata 2 -->
   <section id="rivela">
     <div class="scena">
-      <div class="lato chi">
-        <div class="etichetta">Tu regali a</div>
-        <div class="cornice"><div class="foto" id="fotoChi"></div>
-          <svg class="badge cappello" viewBox="0 0 80 80" aria-hidden="true"><path d="M8 58 Q12 18 52 10 Q40 30 62 52Z" fill="#c41e33"/><path d="M52 10 Q62 8 66 16 Q64 26 56 24Z" fill="#c41e33"/><circle cx="62" cy="14" r="9" fill="#fff"/><rect x="4" y="52" width="62" height="14" rx="7" fill="#fff"/></svg></div>
-        <div class="nome" id="nomeChi"></div>
-      </div>
-      <div class="freccia">
-        <svg viewBox="0 0 90 30"><line x1="2" y1="15" x2="70" y2="15" stroke="currentColor" stroke-width="2" stroke-dasharray="4 5"/><path class="punta" d="M66 5 L86 15 L66 25 L72 15Z" fill="currentColor"/></svg>
-        <small>regala a</small>
-      </div>
       <div class="lato dest">
-        <div class="etichetta">Il tuo destinatario</div>
+        <div class="etichetta">Devi fare il regalo a</div>
         <div class="cornice"><div class="foto" id="fotoDest"></div>
           <svg class="badge stella" viewBox="-12 -12 24 24" aria-hidden="true"><path d="M0 -11 L2.6 -3 L11 0 L2.6 3 L0 11 L-2.6 3 L-11 0 L-2.6 -3Z" fill="#fbe9b7"/></svg></div>
         <div class="nome" id="nomeDest"></div>
@@ -335,13 +299,67 @@ $("apri").onclick=async()=>{
     $("invito").textContent="Il link sembra incompleto. Apri di nuovo il link originale che ti è stato inviato, senza modificarlo.";
     return;
   }
-  $("nomeChi").textContent=NOME;$("nomeDest").textContent=d;$("msgDest").textContent=d;
-  foto($("fotoChi"),NOME);foto($("fotoDest"),d);
+  $("nomeDest").textContent=d;$("msgDest").textContent=d;
+  foto($("fotoDest"),d);
   $("intro").classList.add("nascosto");
   void $("rivela").offsetWidth;
   $("rivela").classList.add("visibile");
   scintille();
 };
+
+/* Rami di abete: disegnati dal codice, ago per ago (con brina, bacche e palline) */
+function abete(svg,seed){
+  let st=seed;const r=()=>{st|=0;st=st+0x6D2B79F5|0;let t=Math.imul(st^st>>>15,1|st);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+  const verdi=["#06261d","#0a3a2b","#0e4d39","#136148","#1b7a58"];
+  const grp=verdi.map(()=>[]);const brina=[];const steli=[];const punti=[];
+  const ago=(x1,y1,x2,y2,t)=>{
+    const ch=r();let c=Math.min(4,Math.floor((ch*.55+t*.55)*5));
+    const s=x1.toFixed(1)+" "+y1.toFixed(1)+"L"+x2.toFixed(1)+" "+y2.toFixed(1);
+    if(t>.35&&r()<.14)brina.push(s);else grp[c].push(s);
+  };
+  function ramo(x,y,a,len,w,prof,curva){
+    const passo=3.1,n=Math.round(len/passo);let px=x,py=y;const pts=[];
+    for(let i=0;i<n;i++){
+      const t=i/n,dir=a+Math.sin(t*3.2+curva)*.16;
+      px+=Math.cos(dir)*passo;py+=Math.sin(dir)*passo;pts.push([px,py,dir,t]);
+      const L=w*(1-t*.72)*(.8+r()*.4);
+      for(const lato of[-1,1]){
+        for(let k=0;k<2;k++){
+          const na=dir+lato*(1.12-.5*t)+(r()-.5)*.3,l=L*(k?.7:1);
+          ago(px,py,px+Math.cos(na)*l,py+Math.sin(na)*l,t);
+        }
+      }
+      if(prof<2&&i%10===5&&t>.12&&t<.8){
+        ramo(px,py,dir+(i%20===5?-1:1)*.85,len*(.36-.06*prof),w*.72,prof+1,r()*6);
+      }
+    }
+    steli.push("M"+x.toFixed(1)+" "+y.toFixed(1)+pts.map(q=>"L"+q[0].toFixed(1)+" "+q[1].toFixed(1)).join(""));
+    if(prof===0)punti.push(pts);
+  }
+  const rad=d=>d*Math.PI/180;
+  ramo(-8,410,rad(-18),370,34,0,1);
+  ramo(-8,410,rad(-42),335,32,0,2);
+  ramo(-8,410,rad(-67),290,30,0,3);
+  ramo(-8,410,rad(-86),215,26,0,4);
+  let h='<defs><radialGradient id="aR'+seed+'" cx="35%" cy="30%"><stop offset="0" stop-color="#ff8a95"/><stop offset=".55" stop-color="#b3182b"/><stop offset="1" stop-color="#5a0713"/></radialGradient>'+
+    '<radialGradient id="aO'+seed+'" cx="35%" cy="30%"><stop offset="0" stop-color="#fff4cc"/><stop offset=".5" stop-color="#e8c274"/><stop offset="1" stop-color="#8a5f17"/></radialGradient></defs>';
+  h+='<path d="'+steli.map(s=>s).join("")+'" stroke="#2a1a0e" stroke-width="2.6" fill="none" stroke-linecap="round"/>';
+  grp.forEach((g,i)=>{h+='<path d="'+g.map(s=>"M"+s).join("")+'" stroke="'+verdi[i]+'" stroke-width="'+(1.5+i*.12)+'" stroke-linecap="round" fill="none"/>'});
+  h+='<path d="'+brina.map(s=>"M"+s).join("")+'" stroke="#eaf5ef" stroke-opacity=".8" stroke-width="1.3" stroke-linecap="round" fill="none"/>';
+  const palla=(x,y,rr,g,f)=>'<g><line x1="'+x+'" y1="'+(y-rr)+'" x2="'+x+'" y2="'+(y-rr-6)+'" stroke="#e8c274" stroke-width="1.4"/><circle cx="'+x+'" cy="'+y+'" r="'+rr+'" fill="url(#'+g+seed+')"/><ellipse cx="'+(x-rr*.35)+'" cy="'+(y-rr*.4)+'" rx="'+rr*.28+'" ry="'+rr*.4+'" fill="#fff" opacity=".4" transform="rotate(-30 '+(x-rr*.35)+' '+(y-rr*.4)+')"/></g>';
+  const bacche=(x,y)=>{let o='';[[0,0,5],[7,3,4.4],[-5,6,4.2]].forEach(b=>{o+='<circle cx="'+(x+b[0])+'" cy="'+(y+b[1])+'" r="'+b[2]+'" fill="url(#aR'+seed+')"/><circle cx="'+(x+b[0]-1.5)+'" cy="'+(y+b[1]-1.6)+'" r="1.2" fill="#fff" opacity=".6"/>'});return o};
+  const q=(i,t)=>punti[i][Math.floor(punti[i].length*t)];
+  let p;
+  p=q(0,.62);h+=palla(p[0],p[1]+14,12,"aR");
+  p=q(1,.72);h+=palla(p[0],p[1]+12,10,"aO");
+  p=q(2,.55);h+=palla(p[0],p[1]+12,9,"aR");
+  p=q(0,.3);h+=bacche(p[0],p[1]);
+  p=q(1,.45);h+=bacche(p[0],p[1]);
+  p=q(2,.8);h+=bacche(p[0],p[1]);
+  p=q(3,.6);h+=palla(p[0],p[1]+10,8,"aO");
+  svg.innerHTML=h;
+}
+abete($("ramoSx"),7);abete($("ramoDx"),19);
 
 /* Ghirlanda con lampadine disegnate in SVG */
 function ghirlanda(){
