@@ -132,6 +132,26 @@ h1{font-family:"Cinzel",serif;font-weight:700;font-size:clamp(1.9rem,min(7vw,6.5
   body{overflow:hidden}
 }
 
+/* ===== SCHERMATA COPERTINA: i 9 ritratti ===== */
+#copertina{display:flex;flex-direction:column;align-items:center;gap:clamp(12px,2.4dvh,24px);width:100%;max-width:520px}
+#copertina.nascosto{display:none}
+.galleria{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,2dvh,22px) clamp(8px,3vw,24px);width:100%}
+.med{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;transform:scale(.55) translateY(16px);
+  animation:appare .9s cubic-bezier(.2,.9,.3,1.15) forwards;animation-delay:calc(var(--i)*.24s + .25s)}
+@keyframes appare{to{opacity:1;transform:none}}
+.med .anello{width:clamp(64px,min(26vw,12.5dvh),130px);aspect-ratio:1;border-radius:50%;padding:3px;
+  background:conic-gradient(from 20deg,var(--oro-chiaro),var(--oro-scuro),var(--oro),var(--oro-chiaro),var(--oro-scuro),var(--oro-chiaro));
+  box-shadow:0 8px 20px rgba(0,0,0,.45);animation:galleggia 5s ease-in-out infinite;animation-delay:calc(var(--i)*-.7s)}
+@keyframes galleggia{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.fm{width:100%;height:100%;border-radius:50%;overflow:hidden;border:2px solid var(--bg1);display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 30% 25%,#1c5a47,#0a2b22)}
+.fm img{width:100%;height:100%;object-fit:cover;display:block}
+.med .segnaposto{font-size:1.7rem}.med .segnaposto small{display:none}
+.med span{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:clamp(.9rem,2.3dvh,1.15rem);line-height:1.1}
+.med.tu span{color:var(--oro-chiaro)}
+.med.tu span::after{content:" (tu)";font-size:.8em;opacity:.8;font-weight:500}
+.med.tu .anello{box-shadow:0 0 0 3px rgba(232,194,116,.22),0 8px 20px rgba(0,0,0,.45)}
+
 /* ===== SCHERMATA 0: regolamento ===== */
 #regole{display:flex;flex-direction:column;align-items:center;gap:22px;max-width:620px;width:100%}
 #regole.nascosto{display:none}
@@ -200,8 +220,15 @@ main:has(#rivela.visibile) .titolo{display:none}
     </div>
   </header>
 
+  <!-- Schermata copertina -->
+  <section id="copertina">
+    <p class="saluto">Ciao <b>__NOME__</b>,<br>ecco chi gioca quest'anno.</p>
+    <div class="galleria" id="galleria"></div>
+    <button class="bottone" id="avanti">Avanti</button>
+  </section>
+
   <!-- Schermata 0: regolamento -->
-  <section id="regole">
+  <section id="regole" class="nascosto">
     <p class="saluto">Ciao <b>__NOME__</b>,<br>benvenuto nel Secret Santa.</p>
     <div class="carta">
       <h2>Prima di cominciare</h2>
@@ -273,6 +300,13 @@ function foto(el,nome){
   img.onload=()=>{el.innerHTML="";el.appendChild(img)};
   img.src="../foto/"+slug(nome)+".jpg";
 }
+const TUTTI=["Massimo","Cristiana","Giorgia","Lorenzo","Luca","Laura","Ivo","Maria Elena","Francesca"];
+TUTTI.forEach((n,i)=>{
+  const d=document.createElement("div");d.className="med"+(n===NOME?" tu":"");d.style.setProperty("--i",i);
+  d.innerHTML='<div class="anello"><div class="fm"></div></div><span>'+n+'</span>';
+  $("galleria").appendChild(d);foto(d.querySelector(".fm"),n);
+});
+$("avanti").onclick=()=>{$("copertina").classList.add("nascosto");$("regole").classList.remove("nascosto");scrollTo(0,0)};
 $("continua").onclick=()=>{$("regole").classList.add("nascosto");$("intro").classList.remove("nascosto");scrollTo(0,0)};
 $("apri").onclick=async()=>{
   let d;
